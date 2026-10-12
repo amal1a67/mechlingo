@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Курсы — MechLingo{% endblock %}
+{% set active = 'courses' %}
+{% block content %}
+<div class="page-container">
+
+    <div class="page-header">
+        <h1>📚 Все курсы</h1>
+        <p class="page-subtitle">Выбери, что хочешь изучать</p>
+    </div>
+
+    <div class="courses-grid">
+        {% for c in courses %}
+        <div class="course-card course-card-large">
+            <div class="course-icon-lg" style="background: {{ c.color }}20; color: {{ c.color }};">
+                {{ c.icon }}
+            </div>
+            <div class="course-body">
+                <div class="course-name-lg">{{ c.name }}</div>
+                <div class="course-desc">{{ c.description or 'Медицинский курс' }}</div>
+
+                {% if c.id in user_course_ids %}
+                    <button class="btn btn-success btn-block" disabled>✅ Уже в профиле</button>
+                {% else %}
+                    <form method="POST" action="/courses/{{ c.id }}/add">
+                        <button type="submit" class="btn btn-primary btn-block">Начать курс</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">Пока нет курсов</div>
+            <div class="empty-text">Скоро появятся</div>
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}
