@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+{% block title %}{{ level.name }} — Прохождение{% endblock %}
+{% block content %}
+<div class="level-container">
+
+    <!-- Прогресс-бар сверху -->
+    <div class="level-progress">
+        <div class="level-progress-bar">
+            <div class="level-progress-fill" id="progressFill" style="width: 0%"></div>
+        </div>
+        <div class="level-hearts" id="heartsDisplay">❤️❤️❤️</div>
+    </div>
+
+    <!-- Контент вопроса -->
+    <div class="question-area" id="questionArea">
+        <div class="question-loading">Загрузка...</div>
+    </div>
+
+    <!-- Фидбэк внизу -->
+    <div class="feedback-bar" id="feedbackBar">
+        <div class="feedback-content" id="feedbackContent"></div>
+        <button class="btn btn-primary btn-block" id="nextBtn" style="display: none;">Продолжить</button>
+    </div>
+
+</div>
+
+<script>
+const QUESTIONS = {{ questions|tojson|safe }};
+const LEVEL_ID = {{ level.id }};
+
+let currentIndex = 0;
+let correctCount = 0;
+let answered = false;
+let selectedAnswer = null;
+
+function updateProgress() {
+    const percent = (currentIndex / QUESTIONS.length) * 100;
+    document.getElementById('progressFill').style.width = percent + '%';
+}
+
+function renderQuestion() {
+    if (currentIndex >= QUESTIONS.length) {
+        finishLevel();
+        return;
+    }
+
+    const q = QUESTIONS[currentIndex];
+    const area = document.getElementById('questionArea');
+    answered = false;
+    selectedAnswer = null;
+
+    // Перемешиваем варианты
+    const shuffled = [...q.options];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    let html = `
+        <div class="question-header">
+            <span class="question-number">Вопрос ${currentIndex + 1} из ${QUESTIONS.length}</span>
+        </div>
+        <div class="question-text">${q.question}</div>
+        <div class="options-list">
+    `;
+
+    shuffled.forEach((opt, i) => {
+        const letter = String.fromCharCode(65 + i);
+        html += `
+            <button class="option-btn" onclick="selectAnswer('${letter}', '${opt.replace(/'/g, "\\'")}', this)">
+                <span class="option-letter">${letter}</span>
+                <span class="option-text">${opt}</span>
+            </button>
+        `;
+    });
+
+    html += '</div>';
+    area.innerHTML = html;
+    document.getElementById('feedbackBar').classList.remove('visible');
+    document.getElementById('nextBtn').style.display = 'none';
+
+    updateProgress();
+}
+
+function selectAnswer(letter, text, btn) {
+    if (answered) return;
+    answered = true;
+    selectedAnswer = letter;
+
+    const q = QUESTIONS[currentIndex];
+    const isCorrect = letter === q.correct_answer;
+
+    // Отключаем все кнопки
+    document.querySelectorAll('.option-btn').forEach(b => {
+        b.disabled = true;
+        b.classList.add('disabled');
+    });
+
+    // Подсвечиваем
+    if (isCorrect) {
+        btn.classList.add('correct');
+        correctCount++;
+    } else {
+        btn.classList.add('wrong');
+        // Находим правильную кнопку
+        document.querySelectorAll('.option-btn').forEach(b => {
+            const lbl = b.querySelector('.option-letter').textContent;
+            if (lbl === q.correct_answer) {
+                b.classList.add('correct');
+            }
+        });
+    }
+
+    // Показываем фидбэк
+    const feedback = document.getElementById('feedbackBar');
+    const content = document.getElementById('feedbackContent');
+    content.innerHTML = `
+        <div class="feedback-message ${isCorrect ? 'success' : 'error'}">
+            ${isCorrect ? '✅ Верно!' : '❌ Неверно'}
+        </div>
+        ${q.explanation ? `<div class="feedback-explanation">${q.explanation}</div>` : ''}
+    `;
+    feedback.classList.add('visible');
+    document.getElementById('nextBtn').style.display = 'block';
+}
+
+function nextQuestion() {
+    currentIndex++;
+    renderQuestion();
+}
+
+async function finishLevel() {
+    const area = document.getElementById('questionArea');
+    area.innerHTML = '<div class="question-loading">Сохранение...</div>';
+
+    try {
+        const response = await fetch(`/api/level/${LEVEL_ID}/complete`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                correct: correctCount,
+                total: QUESTIONS.length
+            })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+            showResult(data);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка сохранения');
+    }
+}
+
+function showResult(data) {
+    const area = document.getElementById('questionArea');
+    const stars = '⭐'.repeat(data.stars) + '☆'.repeat(3 - data.stars);
+
+    area.innerHTML = `
+        <div class="result-screen">
+            <div class="result-emoji">${data.stars >= 2 ? '🎉' : data.stars >= 1 ? '👍' : '😔'}</div>
+            <h2>${data.stars >= 2 ? 'Отлично!' : data.stars >= 1 ? 'Хорошо!' : 'Попробуй ещё!'}</h2>
+            <div class="result-stars">${stars}</div>
+            <div class="result-stats">
+                <div class="result-stat">
+                    <span class="result-stat-icon">✅</span>
+                    <span>${data.correct} / ${data.total}</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-stat-icon">⚡</span>
+                    <span>+${data.xp_earned} XP</span>
+                </div>
+                <div class="result-stat">
+                    <span class="result-stat-icon">📊</span>
+                    <span>${data.percent}%</span>
+                </div>
+            </div>
+            <div class="result-actions">
+                <a href="/topic/{{ topic.id }}" class="btn btn-primary btn-lg">Продолжить</a>
+                <a href="/level/{{ level.id }}" class="btn btn-outline btn-lg">Пройти заново</a>
+            </div>
+        </div>
+    `;
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('feedbackBar').classList.remove('visible');
+}
+
+document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+
+// Старт
+renderQuestion();
+</script>
+
+<style>
+.level-container {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: calc(100vh - 100px);
+    display: flex;
+    flex-direction: column;
+}
+
+.level-progress {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.level-progress-bar {
+    flex: 1;
+    height: 16px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+}
+
+.level-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a78bfa);
+    border-radius: 100px;
+    transition: width 0.4s ease;
+}
+
+.level-hearts {
+    font-size: 20px;
+    letter-spacing: 2px;
+}
+
+.question-area {
+    flex: 1;
+}
+
+.question-loading {
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 60px 0;
+    font-size: 15px;
+}
+
+.question-header {
+    margin-bottom: 16px;
+}
+
+.question-number {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.question-text {
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.4;
+    letter-spacing: -0.02em;
+    margin-bottom: 32px;
+    color: var(--text);
+}
+
+.options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.option-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background: var(--bg-elevated);
+    border: 3px solid var(--border);
+    border-radius: var(--radius-lg);
+    font-size: 16px;
+    font-weight: 600;
+    text-align: left;
+    color: var(--text);
+    transition: all 0.15s;
+    cursor: pointer;
+    width: 100%;
+    font-family: inherit;
+}
+
+.option-btn:hover:not(.disabled) {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 var(--primary-light);
+}
+
+.option-letter {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    flex-shrink: 0;
+    border: 2px solid var(--border);
+    font-size: 16px;
+}
+
+.option-btn.correct {
+    background: #dcfce7;
+    border-color: #16a34a;
+    color: #14532d;
+}
+
+[data-theme="dark"] .option-btn.correct {
+    background: #14532d;
+    border-color: #22c55e;
+    color: #dcfce7;
+}
+
+.option-btn.correct .option-letter {
+    background: #16a34a;
+    border-color: #16a34a;
+    color: white;
+}
+
+.option-btn.wrong {
+    background: #fee2e2;
+    border-color: #dc2626;
+    color: #7f1d1d;
+}
+
+[data-theme="dark"] .option-btn.wrong {
+    background: #450a0a;
+    border-color: #ef4444;
+    color: #fecaca;
+}
+
+.option-btn.wrong .option-letter {
+    background: #dc2626;
+    border-color: #dc2626;
+    color: white;
+}
+
+.option-btn.disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Feedback bar */
+.feedback-bar {
+    position: sticky;
+    bottom: 0;
+    margin: 32px -20px -20px;
+    padding: 20px;
+    background: var(--bg-elevated);
+    border-top: 2px solid var(--border);
+    border-radius: 0;
+    transform: translateY(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.feedback-bar.visible {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.feedback-message {
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 8px;
+}
+
+.feedback-message.success { color: #16a34a; }
+.feedback-message.error { color: #dc2626; }
+
+[data-theme="dark"] .feedback-message.success { color: #22c55e; }
+[data-theme="dark"] .feedback-message.error { color: #ef4444; }
+
+.feedback-explanation {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.5;
+}
+
+/* Результат */
+.result-screen {
+    text-align: center;
+    padding: 40px 20px;
+    animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.result-emoji {
+    font-size: 80px;
+    margin-bottom: 16px;
+    animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.result-screen h2 {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    margin-bottom: 16px;
+    color: var(--primary);
+}
+
+.result-stars {
+    font-size: 44px;
+    letter-spacing: 6px;
+    margin-bottom: 32px;
+}
+
+.result-stats {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-bottom: 40px;
+    flex-wrap: wrap;
+}
+
+.result-stat {
+    background: var(--bg-elevated);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 24px;
+    font-size: 18px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary);
+}
+
+.result-stat-icon {
+    font-size: 22px;
+}
+
+.result-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}
