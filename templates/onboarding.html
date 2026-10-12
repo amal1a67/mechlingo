@@ -3,14 +3,9 @@
 {% block content %}
 <div class="onboarding-container">
 
-    <div class="onboarding-progress">
-        <div class="onboarding-step active">1</div>
-        <div class="onboarding-line"></div>
-        <div class="onboarding-step">2</div>
-    </div>
-
     <div class="onboarding-header">
-        <h1>Привет, {{ user.username }}! 👋</h1>
+        <div class="onboarding-step-label">Шаг 1 из 2</div>
+        <h1>Привет, {{ user.username }}</h1>
         <p>Выбери курсы, которые хочешь изучать. Можно несколько.</p>
     </div>
 
@@ -20,20 +15,23 @@
         <div class="onboarding-course {% if c.id in chosen %}selected{% endif %}"
              data-course-id="{{ c.id }}"
              onclick="toggleCourse(this)">
-            <div class="onboarding-course-icon" style="background: {{ c.color }}20; color: {{ c.color }};">
-                {{ c.icon }}
+            <div class="onboarding-course-icon" style="background: {{ c.color }}15; color: {{ c.color }};">
+                {{ c.name[0] }}
             </div>
             <div class="onboarding-course-info">
                 <div class="onboarding-course-name">{{ c.name }}</div>
                 <div class="onboarding-course-desc">{{ c.description or 'Медицинский курс' }}</div>
             </div>
-            <div class="onboarding-check">✓</div>
+            <div class="onboarding-check">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                </svg>
+            </div>
         </div>
         {% endfor %}
     </div>
     {% else %}
     <div class="empty-state">
-        <div class="empty-icon">📚</div>
         <div class="empty-title">Курсы пока не добавлены</div>
         <div class="empty-text">Скоро появятся</div>
     </div>
@@ -44,7 +42,11 @@
             Выбрано: <span id="countDisplay">{{ chosen|length }}</span>
         </div>
         <button class="btn btn-primary btn-lg" onclick="completeOnboarding()" id="continueBtn">
-            Продолжить →
+            Продолжить
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12"/>
+                <polyline points="12 5 19 12 12 19"/>
+            </svg>
         </button>
     </div>
 
@@ -84,12 +86,12 @@ async function completeOnboarding() {
         } else {
             alert(data.error || 'Ошибка');
             btn.disabled = false;
-            btn.textContent = 'Продолжить →';
+            btn.textContent = 'Продолжить';
         }
     } catch (e) {
         alert('Ошибка соединения');
         btn.disabled = false;
-        btn.textContent = 'Продолжить →';
+        btn.textContent = 'Продолжить';
     }
 }
 
