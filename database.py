@@ -34,7 +34,6 @@ def init_db():
         )
     ''')
 
-    # ==================== ГЕЙМИФИКАЦИЯ ====================
     db.execute('''
         CREATE TABLE IF NOT EXISTS user_stats (
             user_id INTEGER PRIMARY KEY,
@@ -49,6 +48,7 @@ def init_db():
             total_lessons INTEGER DEFAULT 0,
             total_correct INTEGER DEFAULT 0,
             total_answers INTEGER DEFAULT 0,
+            has_onboarded INTEGER DEFAULT 0,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
         )
@@ -68,7 +68,6 @@ def init_db():
         )
     ''')
 
-    # Разделы курса (Остеология, Миология)
     db.execute('''
         CREATE TABLE IF NOT EXISTS course_sections (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,7 +81,6 @@ def init_db():
         )
     ''')
 
-    # Темы внутри раздела (Череп, Позвоночник)
     db.execute('''
         CREATE TABLE IF NOT EXISTS course_topics (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -96,7 +94,6 @@ def init_db():
         )
     ''')
 
-    # Уровни внутри темы (Теория 1, Теория 2, Клиника)
     db.execute('''
         CREATE TABLE IF NOT EXISTS course_levels (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -105,13 +102,11 @@ def init_db():
             level_type TEXT DEFAULT 'theory',
             order_index INTEGER DEFAULT 0,
             xp_reward INTEGER DEFAULT 10,
-            questions_count INTEGER DEFAULT 5,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (topic_id) REFERENCES course_topics (id) ON DELETE CASCADE
         )
     ''')
 
-    # ==================== ВОПРОСЫ ====================
     db.execute('''
         CREATE TABLE IF NOT EXISTS level_questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -129,7 +124,6 @@ def init_db():
     ''')
 
     # ==================== ПРОГРЕСС ====================
-    # Курсы, которые выбрал пользователь
     db.execute('''
         CREATE TABLE IF NOT EXISTS user_courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -144,7 +138,6 @@ def init_db():
         )
     ''')
 
-    # Прогресс по уровням
     db.execute('''
         CREATE TABLE IF NOT EXISTS user_progress (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,7 +155,6 @@ def init_db():
         )
     ''')
 
-    # ==================== АКТИВНОСТЬ ====================
     db.execute('''
         CREATE TABLE IF NOT EXISTS daily_activity (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -175,7 +167,6 @@ def init_db():
         )
     ''')
 
-    # ==================== ДОСТИЖЕНИЯ ====================
     db.execute('''
         CREATE TABLE IF NOT EXISTS achievements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -198,7 +189,14 @@ def init_db():
         )
     ''')
 
-    # ==================== СТАРТОВЫЕ ДОСТИЖЕНИЯ ====================
+    # ==================== МИГРАЦИИ ====================
+    try:
+        db.execute('ALTER TABLE user_stats ADD COLUMN has_onboarded INTEGER DEFAULT 0')
+    except:
+        pass
+
+    # ==================== СТАРТОВЫЕ ДАННЫЕ ====================
+    # Достижения
     default_achievements = [
         ('first_step', '🎯 Первый шаг', 'Пройди первый уровень', '🎯'),
         ('streak_3', '🔥 3 дня подряд', '3 дня подряд занимайся', '🔥'),
@@ -216,6 +214,20 @@ def init_db():
                        [code, title, desc, icon])
         except:
             pass
+
+    # Стартовые курсы (только если их нет)
+    existing = db.execute('SELECT COUNT(*) as c FROM courses').fetchone()[0]
+    if existing == 0:
+        default_courses = [
+            ('Анатомия', 'Строение человеческого тела', '🦴', '#7c3aed', 1),
+            ('Физиология', 'Функции органов и систем', '💓', '#ef4444', 2),
+            ('Фармакология', 'Лекарства и их действие', '💊', '#22c55e', 3),
+            ('Гистология', 'Микроскопическое строение тканей', '🔬', '#f59e0b', 4),
+            ('Биохимия', 'Химические процессы в организме', '⚗️', '#06b6d4', 5),
+        ]
+        for name, desc, icon, color, order_idx in default_courses:
+            db.execute('INSERT INTO courses (name, description, icon, color, order_index) VALUES (?,?,?,?,?)',
+                       [name, desc, icon, color, order_idx])
 
     db.commit()
     db.close()
