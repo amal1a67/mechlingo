@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{{ section.name }} — {{ course.name }}{% endblock %}
+{% block content %}
+<div class="page-container">
+
+    <a href="/course/{{ course.id }}" class="back-link">← К курсу «{{ course.name }}»</a>
+
+    <div class="course-hero" style="background: linear-gradient(135deg, {{ course.color }}20, {{ course.color }}10);">
+        <div class="course-hero-icon">{{ section.icon or '📖' }}</div>
+        <h1 class="course-hero-title">{{ section.name }}</h1>
+        <p class="course-hero-desc">{{ section.description or '' }}</p>
+    </div>
+
+    <section class="section">
+        <h2>📝 Темы</h2>
+        {% if topics %}
+        <div class="topics-grid">
+            {% for item in topics %}
+            <a href="/topic/{{ item.topic.id }}" class="topic-card">
+                <div class="topic-header">
+                    <div class="topic-icon">{{ item.topic.icon or '📝' }}</div>
+                    <div class="topic-progress-ring">
+                        <svg viewBox="0 0 36 36">
+                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--border)" stroke-width="3"/>
+                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--primary)" stroke-width="3"
+                                    stroke-dasharray="{{ item.percent }}, 100" stroke-linecap="round"
+                                    transform="rotate(-90 18 18)"/>
+                        </svg>
+                        <span class="topic-progress-text">{{ item.percent }}%</span>
+                    </div>
+                </div>
+                <div class="topic-name">{{ item.topic.name }}</div>
+                <div class="topic-desc">{{ item.topic.description or '' }}</div>
+                <div class="topic-meta">
+                    <span>🎯 {{ item.completed }} / {{ item.total }} уровней</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">В разделе пока нет тем</div>
+            <div class="empty-text">Скоро появятся</div>
+        </div>
+        {% endif %}
+    </section>
+
+</div>
+{% endblock %}
