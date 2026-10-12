@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MechLingo{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="app-layout">
+        {% if user %}
+        <!-- SIDEBAR -->
+        <aside class="sidebar" id="sidebar">
+            <a href="/dashboard" class="sidebar-logo">
+                <span class="logo-icon">🎓</span>
+                <span class="logo-text">MechLingo</span>
+            </a>
+
+            <nav class="sidebar-nav">
+                <a href="/dashboard" class="nav-item {% if active == 'dashboard' %}active{% endif %}">
+                    <span class="nav-icon">🏠</span>
+                    <span>Главная</span>
+                </a>
+                <a href="/courses" class="nav-item {% if active == 'courses' %}active{% endif %}">
+                    <span class="nav-icon">📚</span>
+                    <span>Курсы</span>
+                </a>
+                <a href="/profile" class="nav-item {% if active == 'profile' %}active{% endif %}">
+                    <span class="nav-icon">👤</span>
+                    <span>Профиль</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-mini">
+                    <div class="user-avatar">{{ user.username[0]|upper }}</div>
+                    <div class="user-info">
+                        <div class="user-name">{{ user.username }}</div>
+                        <div class="user-level">Уровень {{ stats.level if stats else 1 }}</div>
+                    </div>
+                </div>
+                <a href="/logout" class="logout-btn" title="Выйти">🚪</a>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- MAIN CONTENT -->
+        <main class="main-content {% if not user %}no-sidebar{% endif %}">
+            {% if user %}
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                </div>
+                <div class="topbar-stats">
+                    <div class="stat-pill stat-streak">
+                        <span>🔥</span>
+                        <span>{{ stats.streak if stats else 0 }}</span>
+                    </div>
+                    <div class="stat-pill stat-xp">
+                        <span>⚡</span>
+                        <span>{{ stats.xp if stats else 0 }}</span>
+                    </div>
+                    <div class="stat-pill stat-hearts">
+                        <span>❤️</span>
+                        <span>{{ stats.hearts if stats else 5 }}</span>
+                    </div>
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Сменить тему">
+                        <span id="theme-icon">🌙</span>
+                    </button>
+                </div>
+            </header>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        // Тема
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-theme');
+            const next = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('theme', next);
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.textContent = next === 'dark' ? '🌙' : '☀️';
+        }
+
+        // Восстановление темы
+        (function() {
+            const saved = localStorage.getItem('theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', saved);
+            const icon = document.getElementById('theme-icon');
+            if (icon) icon.textContent = saved === 'dark' ? '🌙' : '☀️';
+        })();
+
+        // Мобильное меню
+        function toggleSidebar() {
+            document.getElementById('sidebar')?.classList.toggle('open');
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
