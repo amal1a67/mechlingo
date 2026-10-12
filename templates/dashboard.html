@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Главная — MechLingo{% endblock %}
+{% set active = 'dashboard' %}
+{% block content %}
+<div class="page-container">
+
+    <!-- Приветствие -->
+    <div class="welcome-card">
+        <div class="welcome-text">
+            <h1>Привет, {{ user.username }}! 👋</h1>
+            <p>Продолжай учиться — ты на {{ stats.xp }} XP</p>
+        </div>
+        <div class="welcome-streak">
+            <div class="streak-big">🔥 {{ stats.streak }}</div>
+            <div class="streak-label">дней подряд</div>
+        </div>
+    </div>
+
+    <!-- Мои курсы -->
+    <section class="section">
+        <div class="section-header">
+            <h2>📚 Мои курсы</h2>
+            <a href="/courses" class="btn btn-ghost">+ Добавить курс</a>
+        </div>
+
+        {% if user_courses %}
+        <div class="courses-grid">
+            {% for c in user_courses %}
+            <a href="/course/{{ c.id }}" class="course-card">
+                <div class="course-icon" style="background: {{ c.color }}20; color: {{ c.color }};">
+                    {{ c.icon }}
+                </div>
+                <div class="course-info">
+                    <div class="course-name">{{ c.name }}</div>
+                    <div class="course-meta">{{ c.sections_count }} разделов</div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📚</div>
+            <div class="empty-title">Пока нет курсов</div>
+            <div class="empty-text">Выбери курс, чтобы начать учиться</div>
+            <a href="/courses" class="btn btn-primary">Выбрать курс</a>
+        </div>
+        {% endif %}
+    </section>
+
+    {% if all_courses %}
+    <section class="section">
+        <h2>✨ Доступные курсы</h2>
+        <div class="courses-grid">
+            {% for c in all_courses %}
+            <form method="POST" action="/courses/{{ c.id }}/add" class="course-card-form">
+                <div class="course-card course-card-add">
+                    <div class="course-icon" style="background: {{ c.color }}20; color: {{ c.color }};">
+                        {{ c.icon }}
+                    </div>
+                    <div class="course-info">
+                        <div class="course-name">{{ c.name }}</div>
+                        <div class="course-meta">{{ c.description or 'Начать изучать' }}</div>
+                    </div>
+                    <button type="submit" class="btn-add">+</button>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+    </section>
+    {% endif %}
+
+</div>
+{% endblock %}
