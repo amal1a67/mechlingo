@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Регистрация — MechLingo{% endblock %}
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-logo">🎓</div>
+        <h1 class="auth-title">Создай аккаунт</h1>
+        <p class="auth-subtitle">Начни учиться прямо сейчас</p>
+
+        {% if error %}
+        <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="/register" class="auth-form">
+            <div class="form-group">
+                <label>Имя пользователя</label>
+                <input type="text" name="username" required placeholder="Например: doctor_ivan" minlength="3" autocomplete="username">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" required placeholder="you@example.com" autocomplete="email">
+            </div>
+
+            <div class="form-group">
+                <label>Пароль</label>
+                <input type="password" name="password" required placeholder="Минимум 6 символов" minlength="6" autocomplete="new-password">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block btn-lg">Зарегистрироваться</button>
+        </form>
+
+        <div class="auth-footer">
+            Уже есть аккаунт? <a href="/login">Войти</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
