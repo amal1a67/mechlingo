@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Изменить курсы — MechLingo{% endblock %}
+{% block content %}
+<div class="page-container">
+
+    <a href="/dashboard" class="back-link">← На главную</a>
+
+    <div class="page-header">
+        <h1>📚 Мои курсы</h1>
+        <p class="page-subtitle">Отметь курсы, которые хочешь изучать</p>
+    </div>
+
+    <form method="POST" action="/courses/change">
+        <div class="onboarding-courses">
+            {% for c in courses %}
+            <div class="onboarding-course {% if c.id in chosen %}selected{% endif %}"
+                 onclick="toggleCheck(this)">
+                <input type="checkbox" name="course_ids" value="{{ c.id }}"
+                       {% if c.id in chosen %}checked{% endif %}
+                       style="display: none;">
+                <div class="onboarding-course-icon" style="background: {{ c.color }}20; color: {{ c.color }};">
+                    {{ c.icon }}
+                </div>
+                <div class="onboarding-course-info">
+                    <div class="onboarding-course-name">{{ c.name }}</div>
+                    <div class="onboarding-course-desc">{{ c.description or '' }}</div>
+                </div>
+                <div class="onboarding-check">✓</div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div style="margin-top: 24px; text-align: center;">
+            <button type="submit" class="btn btn-primary btn-lg">Сохранить</button>
+        </div>
+    </form>
+
+</div>
+
+<script>
+function toggleCheck(el) {
+    const cb = el.querySelector('input[type="checkbox"]');
+    if (cb) {
+        cb.checked = !cb.checked;
+        el.classList.toggle('selected', cb.checked);
+    }
+}
+</script>
+{% endblock %}
