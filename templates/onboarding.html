@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Выбери курс — MechLingo{% endblock %}
+{% block content %}
+<div class="onboarding-container">
+
+    <div class="onboarding-progress">
+        <div class="onboarding-step active">1</div>
+        <div class="onboarding-line"></div>
+        <div class="onboarding-step">2</div>
+    </div>
+
+    <div class="onboarding-header">
+        <h1>Привет, {{ user.username }}! 👋</h1>
+        <p>Выбери курсы, которые хочешь изучать. Можно несколько.</p>
+    </div>
+
+    {% if courses %}
+    <div class="onboarding-courses">
+        {% for c in courses %}
+        <div class="onboarding-course {% if c.id in chosen %}selected{% endif %}"
+             data-course-id="{{ c.id }}"
+             onclick="toggleCourse(this)">
+            <div class="onboarding-course-icon" style="background: {{ c.color }}20; color: {{ c.color }};">
+                {{ c.icon }}
+            </div>
+            <div class="onboarding-course-info">
+                <div class="onboarding-course-name">{{ c.name }}</div>
+                <div class="onboarding-course-desc">{{ c.description or 'Медицинский курс' }}</div>
+            </div>
+            <div class="onboarding-check">✓</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">📚</div>
+        <div class="empty-title">Курсы пока не добавлены</div>
+        <div class="empty-text">Скоро появятся</div>
+    </div>
+    {% endif %}
+
+    <div class="onboarding-footer">
+        <div class="onboarding-count">
+            Выбрано: <span id="countDisplay">{{ chosen|length }}</span>
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="completeOnboarding()" id="continueBtn">
+            Продолжить →
+        </button>
+    </div>
+
+</div>
+
+<script>
+function toggleCourse(el) {
+    el.classList.toggle('selected');
+    updateCount();
+}
+
+function updateCount() {
+    const count = document.querySelectorAll('.onboarding-course.selected').length;
+    document.getElementById('countDisplay').textContent = count;
+    document.getElementById('continueBtn').disabled = count === 0;
+}
+
+async function completeOnboarding() {
+    const selected = Array.from(document.querySelectorAll('.onboarding-course.selected'))
+                          .map(el => parseInt(el.dataset.courseId));
+
+    if (selected.length === 0) return;
+
+    const btn = document.getElementById('continueBtn');
+    btn.disabled = true;
+    btn.textContent = 'Сохраняем...';
+
+    try {
+        const res = await fetch('/api/onboarding/complete', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({course_ids: selected})
+        });
+        const data = await res.json();
+        if (data.success) {
+            window.location.href = data.redirect || '/dashboard';
+        } else {
+            alert(data.error || 'Ошибка');
+            btn.disabled = false;
+            btn.textContent = 'Продолжить →';
+        }
+    } catch (e) {
+        alert('Ошибка соединения');
+        btn.disabled = false;
+        btn.textContent = 'Продолжить →';
+    }
+}
+
+updateCount();
+</script>
+{% endblock %}
