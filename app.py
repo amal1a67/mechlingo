@@ -6,7 +6,6 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'mechlingo-secret-key-change-in-production')
 app.teardown_appcontext(close_db)
 
-# Инициализация БД при старте
 with app.app_context():
     init_db()
 
@@ -43,7 +42,6 @@ def login_required(f):
 
 
 def update_streak(user_id):
-    """Обновляет стрик при активности"""
     db = get_db()
     stats = get_user_stats(user_id)
     today = datetime.date.today().isoformat()
@@ -70,14 +68,11 @@ def update_streak(user_id):
 
 
 def check_level_unlocked(user_id, level_id):
-    """Проверяет, разблокирован ли уровень"""
     db = get_db()
-    # Получаем информацию об уровне
     level = db.execute('SELECT * FROM course_levels WHERE id=?', [level_id]).fetchone()
     if not level:
         return False
 
-    # Если это первый уровень в теме — разблокирован
     first_level = db.execute('''
         SELECT id FROM course_levels
         WHERE topic_id=? ORDER BY order_index LIMIT 1
@@ -86,7 +81,6 @@ def check_level_unlocked(user_id, level_id):
     if first_level and first_level['id'] == level_id:
         return True
 
-    # Иначе — проверяем, пройден ли предыдущий
     prev_level = db.execute('''
         SELECT id FROM course_levels
         WHERE topic_id=? AND order_index < ?
@@ -105,12 +99,10 @@ def check_level_unlocked(user_id, level_id):
 
 
 def get_level_progress(user_id, level_id):
-    """Получает прогресс пользователя по уровню"""
     db = get_db()
-    progress = db.execute('''
+    return db.execute('''
         SELECT * FROM user_progress WHERE user_id=? AND level_id=?
     ''', [user_id, level_id]).fetchone()
-    return progress
 
 
 # ==================== РЕГИСТРАЦИЯ / ВХОД ====================
@@ -155,7 +147,7 @@ def register():
         db.commit()
 
         session['user_id'] = user_id
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('onboarding'))
 
     return render_template('register.html')
 
@@ -179,6 +171,12 @@ def login():
         session['user_id'] = user['id']
         db.execute('UPDATE users SET last_login=CURRENT_TIMESTAMP WHERE id=?', [user['id']])
         db.commit()
+
+        # Если ещё не прошёл онбординг — на выбор курса
+        stats = get_user_stats(user['id'])
+        if not stats['has_onboarded']:
+            return redirect(url_for('onboarding'))
+
         return redirect(url_for('dashboard'))
 
     return render_template('login.html')
@@ -190,6 +188,71 @@ def logout():
     return redirect(url_for('landing'))
 
 
+# ==================== ONBOARDING ====================
+
+@app.route('/onboarding')
+@login_required
+def onboarding():
+    user = get_user()
+    db = get_db()
+    stats = get_user_stats(user['id'])
+
+    courses = db.execute('SELECT * FROM courses WHERE is_active=1 ORDER BY order_index').fetchall()
+    chosen = [r['course_id'] for r in db.execute('SELECT course_id FROM user_courses WHERE user_id=?', [user['id']]).fetchall()]
+
+    return render_template('onboarding.html',
+                           user=user, stats=stats,
+                           courses=courses, chosen=chosen)
+
+
+@app.route('/api/onboarding/complete', methods=['POST'])
+@login_required
+def onboarding_complete():
+    user = get_user()
+    db = get_db()
+    data = request.get_json()
+    course_ids = data.get('course_ids', [])
+
+    if not course_ids:
+        return jsonify({'success': False, 'error': 'Выбери хотя бы один курс'}), 400
+
+    db.execute('DELETE FROM user_courses WHERE user_id=?', [user['id']])
+    for cid in course_ids:
+        try:
+            db.execute('INSERT INTO user_courses (user_id, course_id) VALUES (?,?)',
+                       [user['id'], int(cid)])
+        except:
+            pass
+
+    db.execute('UPDATE user_stats SET has_onboarded=1 WHERE user_id=?', [user['id']])
+    db.commit()
+
+    return jsonify({'success': True, 'redirect': '/dashboard'})
+
+
+@app.route('/courses/change', methods=['GET', 'POST'])
+@login_required
+def change_courses():
+    user = get_user()
+    db = get_db()
+
+    if request.method == 'POST':
+        course_ids = request.form.getlist('course_ids')
+        db.execute('DELETE FROM user_courses WHERE user_id=?', [user['id']])
+        for cid in course_ids:
+            try:
+                db.execute('INSERT INTO user_courses (user_id, course_id) VALUES (?,?)',
+                           [user['id'], int(cid)])
+            except:
+                pass
+        db.commit()
+        return redirect(url_for('dashboard'))
+
+    courses = db.execute('SELECT * FROM courses WHERE is_active=1 ORDER BY order_index').fetchall()
+    chosen = [r['course_id'] for r in db.execute('SELECT course_id FROM user_courses WHERE user_id=?', [user['id']]).fetchall()]
+    return render_template('change_courses.html', user=user, courses=courses, chosen=chosen)
+
+
 # ==================== ДАШБОРД ====================
 
 @app.route('/dashboard')
@@ -198,6 +261,9 @@ def dashboard():
     user = get_user()
     db = get_db()
     stats = get_user_stats(user['id'])
+
+    if not stats['has_onboarded']:
+        return redirect(url_for('onboarding'))
 
     user_courses = db.execute('''
         SELECT c.*, uc.started_at,
@@ -267,7 +333,6 @@ def course_view(course_id):
 
     sections = db.execute('SELECT * FROM course_sections WHERE course_id=? ORDER BY order_index', [course_id]).fetchall()
 
-    # Для каждого раздела считаем прогресс
     sections_with_progress = []
     for s in sections:
         total_levels = db.execute('''
@@ -312,7 +377,6 @@ def section_view(section_id):
 
     topics = db.execute('SELECT * FROM course_topics WHERE section_id=? ORDER BY order_index', [section_id]).fetchall()
 
-    # Прогресс по каждой теме
     topics_with_progress = []
     for t in topics:
         total = db.execute('SELECT COUNT(*) as c FROM course_levels WHERE topic_id=?', [t['id']]).fetchone()['c']
@@ -351,7 +415,6 @@ def topic_view(topic_id):
 
     levels = db.execute('SELECT * FROM course_levels WHERE topic_id=? ORDER BY order_index', [topic_id]).fetchall()
 
-    # Прогресс по каждому уровню
     levels_with_status = []
     for lv in levels:
         progress = get_level_progress(user['id'], lv['id'])
@@ -386,7 +449,6 @@ def level_view(level_id):
 
     questions = db.execute('SELECT * FROM level_questions WHERE level_id=? ORDER BY order_index', [level_id]).fetchall()
 
-    # Конвертируем в список словарей с парсингом JSON
     q_list = []
     for q in questions:
         try:
@@ -418,13 +480,11 @@ def api_complete_level(level_id):
     correct_count = int(data.get('correct', 0))
     total_count = int(data.get('total', 1))
 
-    # Защита от деления на ноль
     if total_count == 0:
         total_count = 1
 
     percent = int(correct_count / total_count * 100)
 
-    # Считаем звёзды
     if percent >= 95:
         stars = 3
     elif percent >= 80:
@@ -434,16 +494,13 @@ def api_complete_level(level_id):
     else:
         stars = 0
 
-    # XP за уровень
     level = db.execute('SELECT * FROM course_levels WHERE id=?', [level_id]).fetchone()
     xp_earned = int(level['xp_reward'] * (percent / 100)) if percent >= 60 else 0
 
-    # Сохраняем прогресс
     existing = db.execute('SELECT * FROM user_progress WHERE user_id=? AND level_id=?',
                           [user['id'], level_id]).fetchone()
 
     if existing:
-        # Обновляем — берём лучший результат
         best_stars = max(existing['stars'], stars)
         best_score = max(existing['best_score'], percent)
         new_status = 'completed' if best_stars >= 1 else existing['status']
@@ -461,13 +518,9 @@ def api_complete_level(level_id):
             VALUES (?,?,?,?,1,?, CASE WHEN ?='completed' THEN CURRENT_TIMESTAMP ELSE NULL END)
         ''', [user['id'], level_id, new_status, stars, percent, new_status])
 
-    # Обновляем статистику
     stats = get_user_stats(user['id'])
     new_xp = stats['xp'] + xp_earned
-
-    # Уровень пользователя (каждые 100 XP = +1 уровень)
     new_level = new_xp // 100 + 1
-
     new_gems = stats['gems'] + (1 if stars >= 2 else 0)
 
     db.execute('''
@@ -476,7 +529,6 @@ def api_complete_level(level_id):
         WHERE user_id=?
     ''', [new_xp, new_level, new_gems, user['id']])
 
-    # Ежедневная активность
     today = datetime.date.today().isoformat()
     existing_activity = db.execute('SELECT * FROM daily_activity WHERE user_id=? AND activity_date=?',
                                    [user['id'], today]).fetchone()
@@ -489,7 +541,6 @@ def api_complete_level(level_id):
 
     db.commit()
 
-    # Обновляем стрик
     update_streak(user['id'])
 
     return jsonify({
@@ -535,4 +586,5 @@ def api_stats():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
