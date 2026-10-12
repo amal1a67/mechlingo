@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% block title %}{{ topic.name }} — Duolingo-путь{% endblock %}
+{% block content %}
+<div class="page-container">
+
+    <a href="/section/{{ section.id }}" class="back-link">← К разделу «{{ section.name }}»</a>
+
+    <div class="topic-hero">
+        <div class="topic-hero-icon">{{ topic.icon or '📝' }}</div>
+        <h1>{{ topic.name }}</h1>
+        <p>{{ topic.description or '' }}</p>
+    </div>
+
+    <!-- Duolingo-путь -->
+    <div class="duolingo-path">
+        {% for item in levels %}
+        {% set lv = item.level %}
+        {% set is_unlocked = item.unlocked %}
+        {% set is_completed = item.status == 'completed' %}
+
+        {% if is_unlocked %}
+        <a href="/level/{{ lv.id }}"
+           class="path-node {% if is_completed %}completed{% else %}current{% endif %}"
+           data-stars="{{ item.stars }}">
+        {% else %}
+        <div class="path-node locked">
+        {% endif %}
+
+            <div class="node-circle {% if is_completed %}completed{% elif is_unlocked %}current{% else %}locked{% endif %}">
+                {% if is_completed %}
+                    <span class="node-emoji">✓</span>
+                {% elif is_unlocked %}
+                    {% if lv.level_type == 'theory' %}📖
+                    {% elif lv.level_type == 'clinical' %}🩺
+                    {% elif lv.level_type == 'practice' %}🎯
+                    {% else %}⭐{% endif %}
+                {% else %}
+                    🔒
+                {% endif %}
+            </div>
+
+            <div class="node-label">{{ lv.name }}</div>
+
+            {% if is_completed and item.stars > 0 %}
+            <div class="node-stars">
+                {% for i in range(3) %}
+                    <span class="star {% if i < item.stars %}filled{% endif %}">⭐</span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        {% if is_unlocked %}
+        </a>
+        {% else %}
+        </div>
+        {% endif %}
+
+        {% if not loop.last %}
+        <div class="path-connector {% if is_completed %}done{% endif %}"></div>
+        {% endif %}
+
+        {% endfor %}
+    </div>
+
+</div>
+
+<style>
+/* Стили для Duolingo-пути (временно, потом перенесём в style.css) */
+.duolingo-path {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    margin-top: 40px;
+    padding: 0 20px 60px;
+}
+
+.path-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    z-index: 2;
+    transition: transform 0.2s;
+}
+
+.path-node:not(.locked):hover {
+    transform: scale(1.08);
+}
+
+.path-node.locked {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.node-circle {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    background: var(--bg-elevated);
+    border: 4px solid var(--border);
+    box-shadow: 0 6px 0 var(--border);
+    transition: all 0.15s;
+    margin-bottom: 12px;
+}
+
+.node-circle.completed {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-color: #16a34a;
+    box-shadow: 0 6px 0 #15803d;
+    color: white;
+}
+
+.node-circle.current {
+    background: linear-gradient(135deg, var(--primary), #a78bfa);
+    border-color: var(--primary-dark);
+    box-shadow: 0 6px 0 var(--primary-dark);
+    animation: pulse-node 2s ease-in-out infinite;
+}
+
+@keyframes pulse-node {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.node-circle.locked {
+    background: var(--bg);
+    border-color: var(--border);
+    box-shadow: 0 6px 0 var(--border);
+}
+
+.node-emoji {
+    font-size: 42px;
+    font-weight: 900;
+    color: white;
+}
+
+.node-label {
+    font-weight: 800;
+    font-size: 14px;
+    text-align: center;
+    max-width: 140px;
+    color: var(--text);
+}
+
+.node-stars {
+    margin-top: 6px;
+    display: flex;
+    gap: 3px;
+}
+
+.star {
+    font-size: 16px;
+    opacity: 0.25;
+    filter: grayscale(1);
+}
+
+.star.filled {
+    opacity: 1;
+    filter: none;
+    animation: star-pop 0.3s ease;
+}
+
+@keyframes star-pop {
+    0% { transform: scale(0); }
+    80% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.path-connector {
+    width: 4px;
+    height: 40px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: -10px 0;
+}
+
+.path-connector.done {
+    background: linear-gradient(180deg, #22c55e, var(--primary));
+}
+
+.topic-hero {
+    background: var(--bg-elevated);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 40px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.topic-hero-icon {
+    font-size: 64px;
+    margin-bottom: 12px;
+}
+
+.topic-hero h1 {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    margin-bottom: 8px;
+}
+
+.topic-hero p {
+    color: var(--text-secondary);
+}
+
+/* Topics grid (для section.html) */
+.topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.topic-card {
+    background: var(--bg-elevated);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.topic-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow-lg);
+}
+
+.topic-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.topic-icon {
+    font-size: 36px;
+}
+
+.topic-progress-ring {
+    position: relative;
+    width: 48px;
+    height: 48px;
+}
+
+.topic-progress-ring svg {
+    width: 100%;
+    height: 100%;
+}
+
+.topic-progress-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary);
+}
+
+.topic-name {
+    font-weight: 800;
+    font-size: 16px;
+}
+
+.topic-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    flex: 1;
+}
+
+.topic-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+}
+</style>
+{% endblock %}
