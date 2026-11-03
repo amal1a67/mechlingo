@@ -190,10 +190,19 @@ def init_db():
     ''')
 
     # ==================== МИГРАЦИИ ====================
-    try:
-        db.execute('ALTER TABLE user_stats ADD COLUMN has_onboarded INTEGER DEFAULT 0')
-    except:
-        pass
+    def _add_column(table, column, ddl):
+        """Безопасно добавляет колонку, если её нет."""
+        cols = [r[1] for r in db.execute(f'PRAGMA table_info({table})').fetchall()]
+        if column not in cols:
+            db.execute(f'ALTER TABLE {table} ADD COLUMN {ddl}')
+
+    _add_column('user_stats', 'has_onboarded', 'has_onboarded INTEGER DEFAULT 0')
+    _add_column('user_stats', 'daily_goal', 'daily_goal INTEGER DEFAULT 50')
+    _add_column('daily_activity', 'goal_reached', 'goal_reached INTEGER DEFAULT 0')
+    _add_column('daily_activity', 'goal_celebrated', 'goal_celebrated INTEGER DEFAULT 0')
+
+    # Заполняем daily_goal для старых пользователей
+    db.execute('UPDATE user_stats SET daily_goal=50 WHERE daily_goal IS NULL')
 
     # ==================== СТАРТОВЫЕ ДАННЫЕ ====================
     # Достижения
