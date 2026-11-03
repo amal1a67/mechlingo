@@ -392,6 +392,7 @@ def onboarding_complete():
 def change_courses():
     user = get_user()
     db = get_db()
+    stats = get_user_stats(user['id'])
 
     if request.method == 'POST':
         course_ids = request.form.getlist('course_ids')
@@ -407,7 +408,7 @@ def change_courses():
 
     courses = db.execute('SELECT * FROM courses WHERE is_active=1 ORDER BY order_index').fetchall()
     chosen = [r['course_id'] for r in db.execute('SELECT course_id FROM user_courses WHERE user_id=?', [user['id']]).fetchall()]
-    return render_template('change_courses.html', user=user, courses=courses, chosen=chosen)
+    return render_template('change_courses.html', user=user, stats=stats, courses=courses, chosen=chosen)
 
 
 # ==================== ДАШБОРД ====================
@@ -454,6 +455,7 @@ def dashboard():
 def courses_page():
     user = get_user()
     db = get_db()
+    stats = get_user_stats(user['id'])
     all_courses = db.execute('SELECT * FROM courses WHERE is_active=1 ORDER BY order_index').fetchall()
     
     try:
@@ -462,7 +464,7 @@ def courses_page():
     except Exception:
         user_course_ids = []
         
-    return render_template('courses.html', user=user, courses=all_courses, user_course_ids=user_course_ids)
+    return render_template('courses.html', user=user, stats=stats, courses=all_courses, user_course_ids=user_course_ids)
 
 
 @app.route('/courses/<int:course_id>/add', methods=['POST'])
@@ -493,6 +495,7 @@ def remove_course(course_id):
 def course_view(course_id):
     user = get_user()
     db = get_db()
+    stats = get_user_stats(user['id'])
     course = db.execute('SELECT * FROM courses WHERE id=?', [course_id]).fetchone()
     if not course:
         return redirect(url_for('dashboard'))
@@ -529,7 +532,7 @@ def course_view(course_id):
         })
 
     return render_template('course.html',
-                           user=user, course=course,
+                           user=user, stats=stats, course=course,
                            sections=sections_with_progress)
 
 
@@ -540,6 +543,7 @@ def course_view(course_id):
 def section_view(section_id):
     user = get_user()
     db = get_db()
+    stats = get_user_stats(user['id'])
     section = db.execute('SELECT * FROM course_sections WHERE id=?', [section_id]).fetchone()
     if not section:
         return redirect(url_for('dashboard'))
@@ -570,7 +574,7 @@ def section_view(section_id):
         })
 
     return render_template('section.html',
-                           user=user, course=course, section=section,
+                           user=user, stats=stats, course=course, section=section,
                            topics=topics_with_progress)
 
 
@@ -581,6 +585,7 @@ def section_view(section_id):
 def topic_view(topic_id):
     user = get_user()
     db = get_db()
+    stats = get_user_stats(user['id'])
     topic = db.execute('SELECT * FROM course_topics WHERE id=?', [topic_id]).fetchone()
     if not topic:
         return redirect(url_for('dashboard'))
@@ -604,7 +609,7 @@ def topic_view(topic_id):
         })
 
     return render_template('topic.html',
-                           user=user, course=course, section=section, topic=topic,
+                           user=user, stats=stats, course=course, section=section, topic=topic,
                            levels=levels_with_status)
 
 
@@ -615,6 +620,7 @@ def topic_view(topic_id):
 def level_view(level_id):
     user = get_user()
     db = get_db()
+    stats = get_user_stats(user['id'])
     level = db.execute('SELECT * FROM course_levels WHERE id=?', [level_id]).fetchone()
     if not level:
         return redirect(url_for('dashboard'))
@@ -643,7 +649,7 @@ def level_view(level_id):
     topic = db.execute('SELECT * FROM course_topics WHERE id=?', [level['topic_id']]).fetchone()
 
     return render_template('level.html',
-                           user=user, level=level, topic=topic, questions=q_list)
+                           user=user, stats=stats, level=level, topic=topic, questions=q_list)
 
 
 @app.route('/api/level/<int:level_id>/complete', methods=['POST'])
