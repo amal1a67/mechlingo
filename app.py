@@ -18,7 +18,12 @@ def hash_password(p):
 
 def get_user():
     if 'user_id' in session:
-        return get_db().execute('SELECT * FROM users WHERE id=?', [session['user_id']]).fetchone()
+        user = get_db().execute('SELECT * FROM users WHERE id=?', [session['user_id']]).fetchone()
+        if not user:
+            # Защита от старых куки (когда база пересоздалась, а сессия осталась)
+            session.pop('user_id', None)
+            return None
+        return user
     return None
 
 
@@ -717,4 +722,4 @@ def api_stats():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)  # ВКЛЮЧЕН DEBUG!
+    app.run(host='0.0.0.0', port=port)
