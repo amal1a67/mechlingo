@@ -1,73 +1,77 @@
 {% extends "base.html" %}
 {% block title %}Профиль — MechLingo{% endblock %}
 {% set active = 'profile' %}
+
 {% block content %}
 <div class="page-container">
-
+    
+    <!-- Шапка профиля -->
     <div class="profile-header">
         <div class="profile-avatar">{{ user.username[0]|upper }}</div>
         <div class="profile-info">
             <h1>{{ user.username }}</h1>
-            <p>{{ user.email }}</p>
+            <p>{{ user.email }} · С нами с {{ user.created_at[:10] }}</p>
         </div>
     </div>
 
+    <!-- Статистика -->
     <div class="stats-grid">
         <div class="stat-card-lg">
-            <div class="stat-card-icon">⚡</div>
+            <div class="stat-card-icon" style="color: var(--primary);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
             <div class="stat-card-value">{{ stats.xp }}</div>
             <div class="stat-card-label">Всего XP</div>
         </div>
+        
         <div class="stat-card-lg">
-            <div class="stat-card-icon">🔥</div>
+            <div class="stat-card-icon" style="color: #f97316;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 3 5 3 8a3 3 0 0 1-6 0c0-3 2-5 3-8z"/></svg>
+            </div>
             <div class="stat-card-value">{{ stats.streak }}</div>
             <div class="stat-card-label">Дней подряд</div>
         </div>
+
         <div class="stat-card-lg">
-            <div class="stat-card-icon">🏆</div>
+            <div class="stat-card-icon" style="color: #16a34a;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="stat-card-value">{{ stats.total_lessons }}</div>
+            <div class="stat-card-label">Уроков пройдено</div>
+        </div>
+
+        <div class="stat-card-lg">
+            <div class="stat-card-icon" style="color: #ca8a04;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
             <div class="stat-card-value">{{ stats.level }}</div>
             <div class="stat-card-label">Уровень</div>
         </div>
-        <div class="stat-card-lg">
-            <div class="stat-card-icon">💎</div>
-            <div class="stat-card-value">{{ stats.gems }}</div>
-            <div class="stat-card-label">Кристаллов</div>
-        </div>
     </div>
 
+    <!-- Достижения -->
     <section class="section">
-        <h2>📚 Мои курсы</h2>
-        {% if user_courses %}
-        <div class="courses-grid">
-            {% for c in user_courses %}
-            <a href="/course/{{ c.id }}" class="course-card">
-                <div class="course-icon" style="background: {{ c.color }}20; color: {{ c.color }};">{{ c.icon }}</div>
-                <div class="course-info">
-                    <div class="course-name">{{ c.name }}</div>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <p class="text-muted">Пока нет курсов</p>
-        {% endif %}
-    </section>
-
-    <section class="section">
-        <h2>🏆 Достижения ({{ achievements|length }})</h2>
-        {% if achievements %}
+        <h2>Достижения</h2>
+        
         <div class="achievements-grid">
-            {% for a in achievements %}
-            <div class="achievement-card">
-                <div class="achievement-icon">{{ a.icon }}</div>
-                <div class="achievement-title">{{ a.title }}</div>
-                <div class="achievement-desc">{{ a.description }}</div>
-            </div>
+            {% for a in all_achievements %}
+                {% set is_earned = a.id in earned_ids %}
+                <div class="achievement-card" style="{% if not is_earned %}opacity: 0.5; grayscale: 1;{% endif %}">
+                    <div style="font-size: 32px; margin-bottom: 10px;">
+                        {% if is_earned %}{{ a.icon }}{% else %}🔒{% endif %}
+                    </div>
+                    <div class="achievement-title" style="{% if is_earned %}color: var(--primary);{% endif %}">
+                        {{ a.title }}
+                    </div>
+                    <div class="achievement-desc">
+                        {{ a.description }}
+                    </div>
+                    {% if is_earned %}
+                    <div style="font-size: 10px; color: var(--success); font-weight: 700; margin-top: 8px;">ПОЛУЧЕНО</div>
+                    {% endif %}
+                </div>
             {% endfor %}
         </div>
-        {% else %}
-        <p class="text-muted">Пока нет достижений. Начни учиться!</p>
-        {% endif %}
     </section>
 
 </div>
