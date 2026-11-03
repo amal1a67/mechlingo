@@ -18,6 +18,7 @@ def get_db():
 def init_db():
     os.makedirs(os.path.dirname(DATABASE), exist_ok=True)
     db = sqlite3.connect(DATABASE)
+    db.row_factory = sqlite3.Row
     db.execute('PRAGMA foreign_keys = ON')
 
     # ==================== СОЗДАНИЕ ТАБЛИЦ ====================
@@ -165,25 +166,20 @@ def init_db():
         );
     ''')
 
-    # ==================== МИГРАЦИИ (ГАРАНТИРОВАННОЕ ДОБАВЛЕНИЕ КОЛОНОК) ====================
+    # ==================== МИГРАЦИИ ====================
     def add_column_if_missing(table, column, ddl):
-        cursor = db.execute(f"PRAGMA table_info({table})")
-        existing = [row[1] for row in cursor.fetchall()]
-        if column not in existing:
-            db.execute(f"ALTER TABLE {table} ADD COLUMN {ddl}")
-            print(f"✅ Добавлена колонка {column} в {table}")
-        else:
-            print(f"ℹ️ Колонка {column} уже существует в {table}")
+        cols = [r[1] for r in db.execute(f'PRAGMA table_info({table})').fetchall()]
+        if column not in cols:
+            db.execute(f'ALTER TABLE {table} ADD COLUMN {ddl}')
 
     add_column_if_missing('user_stats', 'daily_goal', 'daily_goal INTEGER DEFAULT 50')
     add_column_if_missing('daily_activity', 'goal_reached', 'goal_reached INTEGER DEFAULT 0')
     add_column_if_missing('daily_activity', 'goal_celebrated', 'goal_celebrated INTEGER DEFAULT 0')
 
-    # Заполняем daily_goal для старых пользователей
     db.execute('UPDATE user_stats SET daily_goal=50 WHERE daily_goal IS NULL')
     db.commit()
 
-    # ==================== СТАРТОВЫЕ ДАННЫЕ ====================
+    # ==================== СТАРТОВЫЕ ДАННЫЕ (ДОСТИЖЕНИЯ) ====================
     default_achievements = [
         ('first_step', '🎯 Первый шаг', 'Пройди первый уровень', '🎯'),
         ('streak_3', '🔥 3 дня подряд', '3 дня подряд занимайся', '🔥'),
@@ -202,6 +198,7 @@ def init_db():
         except:
             pass
 
+    # ==================== СТАРТОВЫЕ ДАННЫЕ (КУРСЫ) ====================
     existing_courses = db.execute('SELECT COUNT(*) as c FROM courses').fetchone()[0]
     if existing_courses == 0:
         default_courses = [
@@ -214,10 +211,48 @@ def init_db():
         for name, desc, icon, color, order_idx in default_courses:
             db.execute('INSERT INTO courses (name, description, icon, color, order_index) VALUES (?,?,?,?,?)',
                        [name, desc, icon, color, order_idx])
+        db.commit()
+
+    # ==================== АВТО-ЗАПОЛНЕНИЕ ТЕСТОВЫМИ УРОВНЯМИ ====================
+    # Проверяем, есть ли вообще разделы. Если нет — создаем их для первого курса.
+    has_sections = db.execute('SELECT COUNT(*) as c FROM course_sections').fetchone()[0]
+    if has_sections == 0:
+        # Берем самый первый курс из базы (Анатомия)
+        course = db.execute('SELECT id FROM courses ORDER BY order_index LIMIT 1').fetchone()
+        if course:
+            cid = course['id']
+            
+            # 1. Создаем раздел
+            db.execute('INSERT INTO course_sections (course_id, name, description, icon) VALUES (?,?,?,?)',
+                       [cid, 'Опорно-двигательная система', 'Кости, мышцы и суставы', '🦴'])
+            section_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+            
+            # 2. Создаем тему
+            db.execute('INSERT INTO course_topics (section_id, name, description, icon) VALUES (?,?,?,?)',
+                       [section_id, 'Скелет человека', 'Основные кости и их функции', '🦴'])
+            topic_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
+            
+            # 3. Создаем 5 уровней для змейки
+            for i in range(1, 6):
+                db.execute('INSERT INTO course_levels (topic_id, name, xp_reward) VALUES (?,?,?)',
+                           [topic_id, f'Уровень {i}', 10])
+            
+            # 4. Добавляем 2 тестовых вопроса в 1-й уровень (чтобы было что проходить)
+            lvl_res = db.execute('SELECT id FROM course_levels WHERE topic_id=? ORDER BY order_index LIMIT 1', [topic_id]).fetchone()
+            if lvl_res:
+                lvl_id = lvl_res['id']
+                q_options = '["Ребро", "Позвонок", "Лопатка", "Ключица"]'
+                db.execute('INSERT INTO level_questions (level_id, question, options_json, correct_answer) VALUES (?,?,?,?)',
+                           [lvl_id, 'Какая кость изображена на картинке?', q_options, 'Позвонок'])
+                
+                q_options2 = '["Бедренная", "Большая берцовая", "Локтевая", "Лучевая"]'
+                db.execute('INSERT INTO level_questions (level_id, question, options_json, correct_answer) VALUES (?,?,?,?)',
+                           [lvl_id, 'Какая кость самая длинная в теле человека?', q_options2, 'Бедренная'])
+
+            print("✅ Тестовые разделы, темы и уровни добавлены в базу!")
 
     db.commit()
     db.close()
-    print("✅ База данных инициализирована и мигрирована.")
 
 
 def close_db(e=None):
