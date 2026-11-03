@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Курсы — MechLingo{% endblock %}
+{% set active = 'courses' %}
+
+{% block content %}
+<div class="page-container">
+    
+    <div class="page-header">
+        <h1>Все курсы</h1>
+        <p class="page-subtitle">Выберите медицинские дисциплины для изучения</p>
+    </div>
+
+    {% if courses %}
+    <div class="courses-grid">
+        {% for c in courses %}
+        <div class="course-card-large">
+            <!-- Иконка курса -->
+            <div class="course-icon-lg" style="background: {{ c.color }}15; color: {{ c.color }};">
+                {{ c.icon or c.name[0] }}
+            </div>
+            
+            <div class="course-body">
+                <div class="course-name-lg">{{ c.name }}</div>
+                <div class="course-desc">{{ c.description or 'Описание отсутствует' }}</div>
+                
+                <!-- Кнопки управления -->
+                <div style="margin-top: auto;">
+                    {% if c.id in user_course_ids %}
+                        <form method="POST" action="/courses/{{ c.id }}/remove">
+                            <button type="submit" class="btn btn-outline btn-block" style="border-color: var(--danger); color: var(--danger);">
+                                Убрать из моих курсов
+                            </button>
+                        </form>
+                    {% else %}
+                        <form method="POST" action="/courses/{{ c.id }}/add">
+                            <button type="submit" class="btn btn-primary btn-block">
+                                Добавить курс
+                            </button>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Заглушка, если курсов нет -->
+    <div class="empty-state">
+        <div class="empty-icon" style="font-size: 48px; margin-bottom: 16px;">📭</div>
+        <div class="empty-title">Курсы не найдены</div>
+        <div class="empty-text">В данный момент нет доступных курсов. Попробуйте зайти позже.</div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
