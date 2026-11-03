@@ -1,43 +1,78 @@
 {% extends "base.html" %}
-{% block title %}Курсы — MechLingo{% endblock %}
+{% block title %}{{ course.name }} — MechLingo{% endblock %}
 {% set active = 'courses' %}
 
 {% block content %}
 <div class="page-container">
-    <div class="page-header">
-        <h1>Все курсы</h1>
-        <p class="page-subtitle">Выберите курсы для изучения</p>
+    
+    <!-- Кнопка назад -->
+    <a href="/dashboard" class="back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+        </svg>
+        На главную
+    </a>
+
+    <!-- Шапка курса -->
+    <div class="course-hero">
+        <div class="course-hero-icon" style="background: {{ course.color }}15; color: {{ course.color }};">
+            {{ course.icon or course.name[0] }}
+        </div>
+        <h1 class="course-hero-title">{{ course.name }}</h1>
+        <p class="course-hero-desc">{{ course.description or 'Описание отсутствует' }}</p>
     </div>
 
-    {% if courses %}
-    <div class="courses-grid">
-        {% for c in courses %}
-        <div class="course-card-large">
-            <div class="course-icon-lg" style="background: {{ c.color }}15; color: {{ c.color }};">
-                {{ c.icon or c.name[0] }}
-            </div>
-            <div class="course-body">
-                <div class="course-name-lg">{{ c.name }}</div>
-                <div class="course-desc">{{ c.description or 'Описание отсутствует' }}</div>
+    <!-- Список разделов -->
+    <section class="section">
+        <h2>Разделы курса</h2>
+        
+        {% if sections %}
+        <div class="sections-list">
+            {% for item in sections %}
+            <a href="/section/{{ item.section.id }}" class="section-card">
                 
-                {% if c.id in user_course_ids %}
-                    <form method="POST" action="/courses/{{ c.id }}/remove" style="margin-top: auto;">
-                        <button type="submit" class="btn btn-outline btn-block">Убрать</button>
-                    </form>
-                {% else %}
-                    <form method="POST" action="/courses/{{ c.id }}/add" style="margin-top: auto;">
-                        <button type="submit" class="btn btn-primary btn-block">Добавить</button>
-                    </form>
-                {% endif %}
-            </div>
+                <!-- Иконка раздела -->
+                <div class="section-icon" style="background: {{ course.color }}15; color: {{ course.color }};">
+                    {{ item.section.icon or '📖' }}
+                </div>
+                
+                <!-- Название и описание -->
+                <div class="section-info">
+                    <div class="section-name">{{ item.section.name }}</div>
+                    <div class="section-desc">{{ item.section.description or 'Без описания' }}</div>
+                </div>
+                
+                <!-- Круговой прогресс -->
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="font-size: 13px; font-weight: 600; color: var(--text-muted);">
+                        {{ item.completed }} / {{ item.total }}
+                    </div>
+                    
+                    <div class="topic-progress-ring">
+                        <svg viewBox="0 0 36 36" style="width: 36px; height: 36px; transform: rotate(-90deg);">
+                            <circle cx="18" cy="18" r="16" fill="none" stroke="var(--border)" stroke-width="3" />
+                            <circle cx="18" cy="18" r="16" fill="none" stroke="var(--success)" stroke-width="3"
+                                    stroke-dasharray="{{ item.percent }}, 100" stroke-linecap="round" />
+                        </svg>
+                        <div class="topic-progress-text" style="font-size: 9px;">{{ item.percent }}%</div>
+                    </div>
+                </div>
+                
+                <!-- Стрелочка -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="section-arrow">
+                    <polyline points="9 18 15 12 9 6"/>
+                </svg>
+            </a>
+            {% endfor %}
         </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="empty-state">
-        <div class="empty-title">Курсы не найдены</div>
-        <div class="empty-text">В данный момент нет доступных курсов.</div>
-    </div>
-    {% endif %}
+        {% else %}
+        <!-- Заглушка, если разделов нет -->
+        <div class="empty-state">
+            <div class="empty-title">В этом курсе пока нет разделов</div>
+            <div class="empty-text">Мы уже работаем над этим! Загляните позже.</div>
+            <a href="/courses" class="btn btn-primary" style="margin-top: 16px;">Выбрать другой курс</a>
+        </div>
+        {% endif %}
+    </section>
 </div>
 {% endblock %}
