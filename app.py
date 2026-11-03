@@ -31,6 +31,11 @@ def get_user_stats(user_id):
     db = get_db()
     stats = db.execute('SELECT * FROM user_stats WHERE user_id=?', [user_id]).fetchone()
     if not stats:
+        # Проверяем, существует ли вообще такой пользователь
+        user_exists = db.execute('SELECT id FROM users WHERE id=?', [user_id]).fetchone()
+        if not user_exists:
+            return None  # Если пользователя нет — возвращаем None, а не падаем с ошибкой
+        
         db.execute('INSERT INTO user_stats (user_id) VALUES (?)', [user_id])
         db.commit()
         stats = db.execute('SELECT * FROM user_stats WHERE user_id=?', [user_id]).fetchone()
