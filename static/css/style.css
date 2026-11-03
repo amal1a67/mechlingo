@@ -2201,3 +2201,188 @@ svg { display: block; }
     .toast-container { left: 16px; right: 16px; }
     .toast { min-width: 0; max-width: 100%; }
 }
+/* ==================== DUOLINGO PATH (S-CURVE) ==================== */
+.duolingo-path {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 0;
+    position: relative;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.path-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.2s;
+    width: 100px;
+}
+
+/* --- ЗМЕЙКА (Смещение узлов) --- */
+.path-node:nth-child(4n+1) { transform: translateX(60px); }  /* 1, 5, 9... */
+.path-node:nth-child(4n+2) { transform: translateX(20px); }  /* 2, 6, 10... */
+.path-node:nth-child(4n+3) { transform: translateX(-20px); } /* 3, 7, 11... */
+.path-node:nth-child(4n)   { transform: translateX(-60px); } /* 4, 8, 12... */
+
+.path-node:not(.locked):hover {
+    transform: scale(1.05) translateX(var(--x-offset, 0));
+}
+
+/* Чтобы hover не сбивал позицию, зададим кастомные переменные */
+.path-node:nth-child(4n+1):hover { transform: scale(1.05) translateX(60px); }
+.path-node:nth-child(4n+2):hover { transform: scale(1.05) translateX(20px); }
+.path-node:nth-child(4n+3):hover { transform: scale(1.05) translateX(-20px); }
+.path-node:nth-child(4n):hover   { transform: scale(1.05) translateX(-60px); }
+
+
+/* --- КРУЖКИ --- */
+.node-wrapper {
+    position: relative;
+}
+
+.node-circle {
+    width: 76px;
+    height: 76px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-elevated);
+    border: 3px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.2s;
+    box-shadow: 0 4px 0 var(--border); /* Эффект 3D-кнопки */
+}
+
+.node-circle.completed {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+    box-shadow: 0 4px 0 #15803d;
+}
+
+.node-circle.current {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 4px 0 var(--primary-dark);
+}
+
+.node-circle.current svg {
+    transform: translateX(2px); /* Центрируем треугольник Play */
+}
+
+.path-node:not(.locked):active .node-circle {
+    transform: translateY(4px);
+    box-shadow: 0 0 0 transparent;
+}
+
+/* --- ТЕКСТ И ЗВЕЗДЫ --- */
+.node-label {
+    font-weight: 700;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 10px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    max-width: 140px;
+}
+
+.path-node.locked .node-label {
+    color: var(--text-muted);
+}
+
+.node-stars {
+    display: flex;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.star {
+    font-size: 14px;
+    color: var(--border);
+}
+
+.star.filled {
+    color: #fbbf24;
+}
+
+/* --- АВАТАР НАД ТЕКУЩИМ УРОКНЕМ --- */
+.path-avatar {
+    position: absolute;
+    top: -46px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: floatAvatar 2s ease-in-out infinite;
+    z-index: 10;
+}
+
+.user-avatar-mini {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 16px;
+    border: 3px solid var(--bg);
+    box-shadow: var(--shadow);
+}
+
+/* Хвостик от аватара к кружку */
+.path-avatar::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--bg);
+}
+
+@keyframes floatAvatar {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, -6px); }
+}
+
+/* --- СОЕДИНИТЕЛЬНЫЕ ЛИНИИ --- */
+.path-connector {
+    width: 6px;
+    height: 30px;
+    background: var(--border);
+    border-radius: 6px;
+    margin: -4px 0;
+    z-index: 1;
+}
+
+.path-connector.done {
+    background: var(--success);
+    opacity: 0.5;
+}
+
+/* Адаптив для мобилок (уменьшаем шаг) */
+@media (max-width: 600px) {
+    .path-node:nth-child(4n+1) { transform: translateX(40px); }
+    .path-node:nth-child(4n+2) { transform: translateX(15px); }
+    .path-node:nth-child(4n+3) { transform: translateX(-15px); }
+    .path-node:nth-child(4n)   { transform: translateX(-40px); }
+    
+    .path-node:nth-child(4n+1):hover { transform: scale(1.05) translateX(40px); }
+    .path-node:nth-child(4n+2):hover { transform: scale(1.05) translateX(15px); }
+    .path-node:nth-child(4n+3):hover { transform: scale(1.05) translateX(-15px); }
+    .path-node:nth-child(4n):hover   { transform: scale(1.05) translateX(-40px); }
+    
+    .node-circle { width: 64px; height: 64px; border-width: 2px; }
+    .node-circle svg { width: 24px; height: 24px; }
+}
