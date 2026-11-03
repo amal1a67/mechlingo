@@ -81,9 +81,6 @@ def update_streak(user_id):
 # ==================== ДОСТИЖЕНИЯ ====================
 
 def check_achievements(user_id):
-    """
-    Проверяет условия и выдает новые достижения. Возвращает список названий новых ачивок.
-    """
     db = get_db()
     stats = get_user_stats(user_id)
     if not stats:
@@ -106,28 +103,23 @@ def check_achievements(user_id):
             except:
                 pass
 
-    # 1. Первый шаг
     if 'first_step' not in earned and (stats['total_lessons'] or 0) >= 1:
         grant('first_step')
 
-    # 2. Стрики (3, 7, 30 дней)
     streak = stats['streak'] or 0
     if 'streak_3' not in earned and streak >= 3: grant('streak_3')
     if 'streak_7' not in earned and streak >= 7: grant('streak_7')
     if 'streak_30' not in earned and streak >= 30: grant('streak_30')
 
-    # 3. Уровни (5, 10)
     level = stats['level'] or 1
     if 'level_5' not in earned and level >= 5: grant('level_5')
     if 'level_10' not in earned and level >= 10: grant('level_10')
 
-    # 4. Идеальные уровни (1 и 10 штук)
     perfect_res = db.execute("SELECT COUNT(*) as c FROM user_progress WHERE user_id=? AND stars=3", [user_id]).fetchone()
     perfect_count = perfect_res['c'] if perfect_res else 0
     if 'perfect' not in earned and perfect_count >= 1: grant('perfect')
     if 'perfect_10' not in earned and perfect_count >= 10: grant('perfect_10')
 
-    # 5. Полное прохождение курса
     if 'course_complete' not in earned:
         complete_course = db.execute('''
             SELECT c.id FROM courses c
@@ -745,7 +737,6 @@ def api_complete_level(level_id):
     if xp_earned > 0:
         streak_value = update_streak(user['id'])
 
-    # ПРОВЕРКА ДОСТИЖЕНИЙ
     new_achievements = check_achievements(user['id'])
 
     return jsonify({
@@ -761,7 +752,7 @@ def api_complete_level(level_id):
         'streak': streak_value,
         'goal_reached': goal_reached_now,
         'daily': get_daily_progress(user['id']),
-        'new_achievements': new_achievements, # <-- Передаем на фронт
+        'new_achievements': new_achievements,
     })
 
 
@@ -778,13 +769,18 @@ def profile():
         JOIN user_courses uc ON uc.course_id=c.id
         WHERE uc.user_id=?
     ''', [user['id']]).fetchall()
-    achievements = db.execute('''
-        SELECT a.*, ua.earned_at FROM achievements a
-        JOIN user_achievements ua ON ua.achievement_id=a.id
-        WHERE ua.user_id=?
-    ''', [user['id']]).fetchall()
+    
+    # ВСЕ достижения (для отображения серых замочков)
+    all_achievements = db.execute('SELECT * FROM achievements ORDER BY id').fetchall()
+    
+    # ID тех, что уже получены
+    earned_rows = db.execute('SELECT achievement_id FROM user_achievements WHERE user_id=?', [user['id']]).fetchall()
+    earned_ids = [r['achievement_id'] for r in earned_rows]
+
     return render_template('profile.html', user=user, stats=stats,
-                           user_courses=user_courses, achievements=achievements)
+                           user_courses=user_courses,
+                           all_achievements=all_achievements,
+                           earned_ids=earned_ids)
 
 
 # ==================== API ====================
