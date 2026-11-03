@@ -20,7 +20,6 @@ def get_user():
     if 'user_id' in session:
         user = get_db().execute('SELECT * FROM users WHERE id=?', [session['user_id']]).fetchone()
         if not user:
-            # Если пользователя нет в базе (база пересоздалась, а куки остались) — разлогиниваем
             session.pop('user_id', None)
             return None
         return user
@@ -31,7 +30,6 @@ def get_user_stats(user_id):
     db = get_db()
     stats = db.execute('SELECT * FROM user_stats WHERE user_id=?', [user_id]).fetchone()
     if not stats:
-        # Проверка, что пользователь реально существует (защита от FOREIGN KEY constraint failed)
         user_exists = db.execute('SELECT id FROM users WHERE id=?', [user_id]).fetchone()
         if not user_exists:
             return None
@@ -52,9 +50,6 @@ def login_required(f):
 
 
 def update_streak(user_id):
-    """
-    Идемпотентно в пределах одного дня: если сегодня уже заходили — вернёт текущий стрик.
-    """
     db = get_db()
     stats = get_user_stats(user_id)
     if not stats:
@@ -86,14 +81,10 @@ def update_streak(user_id):
 # ==================== ГЕЙМИФИКАЦИЯ: ЕЖЕДНЕВНАЯ ЦЕЛЬ И СТРИК ====================
 
 def check_streak_reset(user_id):
-    """
-    Вызывается на каждом запросе. Если пользователь пропустил день (или больше) —
-    стрик сбрасывается в 0.
-    """
     db = get_db()
     stats = get_user_stats(user_id)
     if not stats:
-        return  # Пользователь удалён, ничего не делаем
+        return
 
     last = stats['last_activity_date']
     if not last:
@@ -114,9 +105,6 @@ def check_streak_reset(user_id):
 
 
 def get_daily_progress(user_id):
-    """
-    Данные для виджета «Цель на сегодня» на дашборде.
-    """
     db = get_db()
     stats = get_user_stats(user_id)
     if not stats:
@@ -143,7 +131,6 @@ def get_daily_progress(user_id):
 
 
 def get_week_activity(user_id):
-    """Последние 7 дней для календаря на дашборде."""
     db = get_db()
     today = datetime.date.today()
     start = today - datetime.timedelta(days=6)
@@ -448,20 +435,23 @@ def course_view(course_id):
 
     sections_with_progress = []
     for s in sections:
-        total_levels = db.execute('''
+        # Защита от пустых данных: total_levels по умолчанию 0
+        total_res = db.execute('''
             SELECT COUNT(cl.id) as c FROM course_levels cl
             JOIN course_topics ct ON cl.topic_id = ct.id
             WHERE ct.section_id = ?
-        ''', [s['id']]).fetchone()['c']
+        ''', [s['id']]).fetchone()
+        total_levels = total_res['c'] if total_res else 0
 
-        completed_levels = db.execute('''
+        completed_res = db.execute('''
             SELECT COUNT(up.id) as c FROM user_progress up
             JOIN course_levels cl ON up.level_id = cl.id
             JOIN course_topics ct ON cl.topic_id = ct.id
             WHERE ct.section_id = ? AND up.user_id = ? AND up.status = 'completed'
-        ''', [s['id'], user['id']]).fetchone()['c']
+        ''', [s['id'], user['id']]).fetchone()
+        completed_levels = completed_res['c'] if completed_res else 0
 
-        percent = int(completed_levels / total_levels * 100) if total_levels else 0
+        percent = int(completed_levels / total_levels * 100) if total_levels > 0 else 0
 
         sections_with_progress.append({
             'section': s,
@@ -472,7 +462,7 @@ def course_view(course_id):
 
     return render_template('course.html',
                            user=user, course=course,
-                           sections=sections_with_progress)
+                           sections=sections_with_progress if sections_with_progress else [])
 
 
 # ==================== РАЗДЕЛЫ ====================
@@ -492,13 +482,17 @@ def section_view(section_id):
 
     topics_with_progress = []
     for t in topics:
-        total = db.execute('SELECT COUNT(*) as c FROM course_levels WHERE topic_id=?', [t['id']]).fetchone()['c']
-        completed = db.execute('''
+        total_res = db.execute('SELECT COUNT(*) as c FROM course_levels WHERE topic_id=?', [t['id']]).fetchone()
+        total = total_res['c'] if total_res else 0
+
+        completed_res = db.execute('''
             SELECT COUNT(*) as c FROM user_progress
             WHERE user_id=? AND status='completed'
             AND level_id IN (SELECT id FROM course_levels WHERE topic_id=?)
-        ''', [user['id'], t['id']]).fetchone()['c']
-        percent = int(completed / total * 100) if total else 0
+        ''', [user['id'], t['id']]).fetchone()
+        completed = completed_res['c'] if completed_res else 0
+
+        percent = int(completed / total * 100) if total > 0 else 0
 
         topics_with_progress.append({
             'topic': t,
@@ -509,7 +503,7 @@ def section_view(section_id):
 
     return render_template('section.html',
                            user=user, course=course, section=section,
-                           topics=topics_with_progress)
+                           topics=topics_with_progress if topics_with_progress else [])
 
 
 # ==================== ТЕМЫ ====================
@@ -671,7 +665,6 @@ def api_complete_level(level_id):
             VALUES (?,?,1,?)
         ''', [user['id'], today, xp_earned])
 
-    # --- проверка выполнения цели дня ---
     if not was_reached and new_day_xp >= goal and xp_earned > 0:
         db.execute('''
             UPDATE daily_activity SET goal_reached=1
@@ -681,7 +674,6 @@ def api_complete_level(level_id):
 
     db.commit()
 
-    # --- стрик: продлеваем, только если была активность ---
     streak_value = stats['streak']
     if xp_earned > 0:
         streak_value = update_streak(user['id'])
