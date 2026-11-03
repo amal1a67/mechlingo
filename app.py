@@ -78,6 +78,74 @@ def update_streak(user_id):
     return new_streak
 
 
+# ==================== ДОСТИЖЕНИЯ ====================
+
+def check_achievements(user_id):
+    """
+    Проверяет условия и выдает новые достижения. Возвращает список названий новых ачивок.
+    """
+    db = get_db()
+    stats = get_user_stats(user_id)
+    if not stats:
+        return []
+
+    earned = [r['code'] for r in db.execute('''
+        SELECT a.code FROM achievements a 
+        JOIN user_achievements ua ON a.id = ua.achievement_id 
+        WHERE ua.user_id=?
+    ''', [user_id]).fetchall()]
+
+    new_achievements = []
+
+    def grant(code):
+        ach = db.execute('SELECT id, title FROM achievements WHERE code=?', [code]).fetchone()
+        if ach:
+            try:
+                db.execute('INSERT INTO user_achievements (user_id, achievement_id) VALUES (?,?)', [user_id, ach['id']])
+                new_achievements.append(ach['title'])
+            except:
+                pass
+
+    # 1. Первый шаг
+    if 'first_step' not in earned and (stats['total_lessons'] or 0) >= 1:
+        grant('first_step')
+
+    # 2. Стрики (3, 7, 30 дней)
+    streak = stats['streak'] or 0
+    if 'streak_3' not in earned and streak >= 3: grant('streak_3')
+    if 'streak_7' not in earned and streak >= 7: grant('streak_7')
+    if 'streak_30' not in earned and streak >= 30: grant('streak_30')
+
+    # 3. Уровни (5, 10)
+    level = stats['level'] or 1
+    if 'level_5' not in earned and level >= 5: grant('level_5')
+    if 'level_10' not in earned and level >= 10: grant('level_10')
+
+    # 4. Идеальные уровни (1 и 10 штук)
+    perfect_res = db.execute("SELECT COUNT(*) as c FROM user_progress WHERE user_id=? AND stars=3", [user_id]).fetchone()
+    perfect_count = perfect_res['c'] if perfect_res else 0
+    if 'perfect' not in earned and perfect_count >= 1: grant('perfect')
+    if 'perfect_10' not in earned and perfect_count >= 10: grant('perfect_10')
+
+    # 5. Полное прохождение курса
+    if 'course_complete' not in earned:
+        complete_course = db.execute('''
+            SELECT c.id FROM courses c
+            JOIN course_sections cs ON cs.course_id = c.id
+            JOIN course_topics ct ON ct.section_id = cs.id
+            JOIN course_levels cl ON cl.topic_id = ct.id
+            LEFT JOIN user_progress up ON up.level_id = cl.id AND up.user_id = ? AND up.status = 'completed'
+            GROUP BY c.id
+            HAVING COUNT(cl.id) = COUNT(up.id) AND COUNT(cl.id) > 0
+            LIMIT 1
+        ''', [user_id]).fetchone()
+        if complete_course:
+            grant('course_complete')
+
+    db.commit()
+    return new_achievements
+
+
 # ==================== ГЕЙМИФИКАЦИЯ ====================
 
 def check_streak_reset(user_id):
@@ -435,7 +503,6 @@ def course_view(course_id):
 
     sections_with_progress = []
     for s in sections:
-        # Максимально простой и безопасный подсчет прогресса без сложных JOIN
         topics = db.execute('SELECT id FROM course_topics WHERE section_id=?', [s['id']]).fetchall()
         topic_ids = [t['id'] for t in topics]
         
@@ -443,14 +510,10 @@ def course_view(course_id):
         completed_levels = 0
         
         if topic_ids:
-            # Формируем строку вида "1,2,3" для SQL запроса
             placeholders = ','.join(['?'] * len(topic_ids))
-            
-            # Считаем общее количество уровней
             total_res = db.execute(f'SELECT COUNT(*) as c FROM course_levels WHERE topic_id IN ({placeholders})', topic_ids).fetchone()
             total_levels = total_res['c'] if total_res else 0
             
-            # Считаем пройденные
             comp_res = db.execute(f'''
                 SELECT COUNT(*) as c FROM user_progress 
                 WHERE user_id=? AND status='completed' 
@@ -682,6 +745,9 @@ def api_complete_level(level_id):
     if xp_earned > 0:
         streak_value = update_streak(user['id'])
 
+    # ПРОВЕРКА ДОСТИЖЕНИЙ
+    new_achievements = check_achievements(user['id'])
+
     return jsonify({
         'success': True,
         'stars': stars,
@@ -695,6 +761,7 @@ def api_complete_level(level_id):
         'streak': streak_value,
         'goal_reached': goal_reached_now,
         'daily': get_daily_progress(user['id']),
+        'new_achievements': new_achievements, # <-- Передаем на фронт
     })
 
 
