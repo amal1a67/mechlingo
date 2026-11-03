@@ -20,8 +20,8 @@ def init_db():
     db = sqlite3.connect(DATABASE)
     db.execute('PRAGMA foreign_keys = ON')
 
-    # ==================== ПОЛЬЗОВАТЕЛИ ====================
-    db.execute('''
+    # ==================== СОЗДАНИЕ ТАБЛИЦ ====================
+    db.executescript('''
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
@@ -31,10 +31,8 @@ def init_db():
             role TEXT DEFAULT 'student',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_login TIMESTAMP
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS user_stats (
             user_id INTEGER PRIMARY KEY,
             xp INTEGER DEFAULT 0,
@@ -51,11 +49,8 @@ def init_db():
             has_onboarded INTEGER DEFAULT 0,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )
-    ''')
+        );
 
-    # ==================== КУРСЫ ====================
-    db.execute('''
         CREATE TABLE IF NOT EXISTS courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -65,10 +60,8 @@ def init_db():
             order_index INTEGER DEFAULT 0,
             is_active INTEGER DEFAULT 1,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS course_sections (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             course_id INTEGER NOT NULL,
@@ -78,10 +71,8 @@ def init_db():
             order_index INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS course_topics (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             section_id INTEGER NOT NULL,
@@ -91,10 +82,8 @@ def init_db():
             order_index INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (section_id) REFERENCES course_sections (id) ON DELETE CASCADE
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS course_levels (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             topic_id INTEGER NOT NULL,
@@ -104,10 +93,8 @@ def init_db():
             xp_reward INTEGER DEFAULT 10,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (topic_id) REFERENCES course_topics (id) ON DELETE CASCADE
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS level_questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             level_id INTEGER NOT NULL,
@@ -120,11 +107,8 @@ def init_db():
             order_index INTEGER DEFAULT 0,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (level_id) REFERENCES course_levels (id) ON DELETE CASCADE
-        )
-    ''')
+        );
 
-    # ==================== ПРОГРЕСС ====================
-    db.execute('''
         CREATE TABLE IF NOT EXISTS user_courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -135,10 +119,8 @@ def init_db():
             UNIQUE(user_id, course_id),
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
             FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS user_progress (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -152,10 +134,8 @@ def init_db():
             UNIQUE(user_id, level_id),
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
             FOREIGN KEY (level_id) REFERENCES course_levels (id) ON DELETE CASCADE
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS daily_activity (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -164,20 +144,16 @@ def init_db():
             xp_earned INTEGER DEFAULT 0,
             UNIQUE(user_id, activity_date),
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS achievements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             code TEXT NOT NULL UNIQUE,
             title TEXT NOT NULL,
             description TEXT,
             icon TEXT DEFAULT '🏆'
-        )
-    ''')
+        );
 
-    db.execute('''
         CREATE TABLE IF NOT EXISTS user_achievements (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
@@ -186,26 +162,28 @@ def init_db():
             UNIQUE(user_id, achievement_id),
             FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
             FOREIGN KEY (achievement_id) REFERENCES achievements (id) ON DELETE CASCADE
-        )
+        );
     ''')
 
-    # ==================== МИГРАЦИИ ====================
-    def _add_column(table, column, ddl):
-        """Безопасно добавляет колонку, если её нет."""
-        cols = [r[1] for r in db.execute(f'PRAGMA table_info({table})').fetchall()]
-        if column not in cols:
-            db.execute(f'ALTER TABLE {table} ADD COLUMN {ddl}')
+    # ==================== МИГРАЦИИ (ГАРАНТИРОВАННОЕ ДОБАВЛЕНИЕ КОЛОНОК) ====================
+    def add_column_if_missing(table, column, ddl):
+        cursor = db.execute(f"PRAGMA table_info({table})")
+        existing = [row[1] for row in cursor.fetchall()]
+        if column not in existing:
+            db.execute(f"ALTER TABLE {table} ADD COLUMN {ddl}")
+            print(f"✅ Добавлена колонка {column} в {table}")
+        else:
+            print(f"ℹ️ Колонка {column} уже существует в {table}")
 
-    _add_column('user_stats', 'has_onboarded', 'has_onboarded INTEGER DEFAULT 0')
-    _add_column('user_stats', 'daily_goal', 'daily_goal INTEGER DEFAULT 50')
-    _add_column('daily_activity', 'goal_reached', 'goal_reached INTEGER DEFAULT 0')
-    _add_column('daily_activity', 'goal_celebrated', 'goal_celebrated INTEGER DEFAULT 0')
+    add_column_if_missing('user_stats', 'daily_goal', 'daily_goal INTEGER DEFAULT 50')
+    add_column_if_missing('daily_activity', 'goal_reached', 'goal_reached INTEGER DEFAULT 0')
+    add_column_if_missing('daily_activity', 'goal_celebrated', 'goal_celebrated INTEGER DEFAULT 0')
 
     # Заполняем daily_goal для старых пользователей
     db.execute('UPDATE user_stats SET daily_goal=50 WHERE daily_goal IS NULL')
+    db.commit()
 
     # ==================== СТАРТОВЫЕ ДАННЫЕ ====================
-    # Достижения
     default_achievements = [
         ('first_step', '🎯 Первый шаг', 'Пройди первый уровень', '🎯'),
         ('streak_3', '🔥 3 дня подряд', '3 дня подряд занимайся', '🔥'),
@@ -224,9 +202,8 @@ def init_db():
         except:
             pass
 
-    # Стартовые курсы (только если их нет)
-    existing = db.execute('SELECT COUNT(*) as c FROM courses').fetchone()[0]
-    if existing == 0:
+    existing_courses = db.execute('SELECT COUNT(*) as c FROM courses').fetchone()[0]
+    if existing_courses == 0:
         default_courses = [
             ('Анатомия', 'Строение человеческого тела', '🦴', '#7c3aed', 1),
             ('Физиология', 'Функции органов и систем', '💓', '#ef4444', 2),
@@ -240,6 +217,7 @@ def init_db():
 
     db.commit()
     db.close()
+    print("✅ База данных инициализирована и мигрирована.")
 
 
 def close_db(e=None):
