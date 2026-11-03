@@ -78,7 +78,7 @@ def update_streak(user_id):
     return new_streak
 
 
-# ==================== ГЕЙМИФИКАЦИЯ: ЕЖЕДНЕВНАЯ ЦЕЛЬ И СТРИК ====================
+# ==================== ГЕЙМИФИКАЦИЯ ====================
 
 def check_streak_reset(user_id):
     db = get_db()
@@ -435,21 +435,28 @@ def course_view(course_id):
 
     sections_with_progress = []
     for s in sections:
-        # Защита от пустых данных: total_levels по умолчанию 0
-        total_res = db.execute('''
-            SELECT COUNT(cl.id) as c FROM course_levels cl
-            JOIN course_topics ct ON cl.topic_id = ct.id
-            WHERE ct.section_id = ?
-        ''', [s['id']]).fetchone()
-        total_levels = total_res['c'] if total_res else 0
-
-        completed_res = db.execute('''
-            SELECT COUNT(up.id) as c FROM user_progress up
-            JOIN course_levels cl ON up.level_id = cl.id
-            JOIN course_topics ct ON cl.topic_id = ct.id
-            WHERE ct.section_id = ? AND up.user_id = ? AND up.status = 'completed'
-        ''', [s['id'], user['id']]).fetchone()
-        completed_levels = completed_res['c'] if completed_res else 0
+        # Максимально простой и безопасный подсчет прогресса без сложных JOIN
+        topics = db.execute('SELECT id FROM course_topics WHERE section_id=?', [s['id']]).fetchall()
+        topic_ids = [t['id'] for t in topics]
+        
+        total_levels = 0
+        completed_levels = 0
+        
+        if topic_ids:
+            # Формируем строку вида "1,2,3" для SQL запроса
+            placeholders = ','.join(['?'] * len(topic_ids))
+            
+            # Считаем общее количество уровней
+            total_res = db.execute(f'SELECT COUNT(*) as c FROM course_levels WHERE topic_id IN ({placeholders})', topic_ids).fetchone()
+            total_levels = total_res['c'] if total_res else 0
+            
+            # Считаем пройденные
+            comp_res = db.execute(f'''
+                SELECT COUNT(*) as c FROM user_progress 
+                WHERE user_id=? AND status='completed' 
+                AND level_id IN (SELECT id FROM course_levels WHERE topic_id IN ({placeholders}))
+            ''', [user['id']] + topic_ids).fetchone()
+            completed_levels = comp_res['c'] if comp_res else 0
 
         percent = int(completed_levels / total_levels * 100) if total_levels > 0 else 0
 
@@ -462,7 +469,7 @@ def course_view(course_id):
 
     return render_template('course.html',
                            user=user, course=course,
-                           sections=sections_with_progress if sections_with_progress else [])
+                           sections=sections_with_progress)
 
 
 # ==================== РАЗДЕЛЫ ====================
@@ -503,7 +510,7 @@ def section_view(section_id):
 
     return render_template('section.html',
                            user=user, course=course, section=section,
-                           topics=topics_with_progress if topics_with_progress else [])
+                           topics=topics_with_progress)
 
 
 # ==================== ТЕМЫ ====================
@@ -604,7 +611,6 @@ def api_complete_level(level_id):
     level = db.execute('SELECT * FROM course_levels WHERE id=?', [level_id]).fetchone()
     xp_earned = int(level['xp_reward'] * (percent / 100)) if percent >= 60 else 0
 
-    # --- user_progress ---
     existing = db.execute('SELECT * FROM user_progress WHERE user_id=? AND level_id=?',
                           [user['id'], level_id]).fetchone()
 
@@ -626,7 +632,6 @@ def api_complete_level(level_id):
             VALUES (?,?,?,?,1,?, CASE WHEN ?='completed' THEN CURRENT_TIMESTAMP ELSE NULL END)
         ''', [user['id'], level_id, new_status, stars, percent, new_status])
 
-    # --- user_stats: XP, уровень, гемы ---
     stats = get_user_stats(user['id'])
     new_xp = stats['xp'] + xp_earned
     new_level = new_xp // 100 + 1
@@ -638,7 +643,6 @@ def api_complete_level(level_id):
         WHERE user_id=?
     ''', [new_xp, new_level, new_gems, user['id']])
 
-    # --- daily_activity: XP + уроки за день ---
     today = datetime.date.today().isoformat()
     activity = db.execute(
         'SELECT * FROM daily_activity WHERE user_id=? AND activity_date=?',
