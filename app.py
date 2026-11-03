@@ -20,7 +20,7 @@ def get_user():
     if 'user_id' in session:
         user = get_db().execute('SELECT * FROM users WHERE id=?', [session['user_id']]).fetchone()
         if not user:
-            # Защита от старых куки (когда база пересоздалась, а сессия осталась)
+            # Если пользователя нет в базе (база пересоздалась, а куки остались) — разлогиниваем
             session.pop('user_id', None)
             return None
         return user
@@ -31,10 +31,10 @@ def get_user_stats(user_id):
     db = get_db()
     stats = db.execute('SELECT * FROM user_stats WHERE user_id=?', [user_id]).fetchone()
     if not stats:
-        # Проверяем, существует ли вообще такой пользователь
+        # Проверка, что пользователь реально существует (защита от FOREIGN KEY constraint failed)
         user_exists = db.execute('SELECT id FROM users WHERE id=?', [user_id]).fetchone()
         if not user_exists:
-            return None  # Если пользователя нет — возвращаем None, а не падаем с ошибкой
+            return None
         
         db.execute('INSERT INTO user_stats (user_id) VALUES (?)', [user_id])
         db.commit()
@@ -57,6 +57,9 @@ def update_streak(user_id):
     """
     db = get_db()
     stats = get_user_stats(user_id)
+    if not stats:
+        return 0
+        
     today = datetime.date.today().isoformat()
     last = stats['last_activity_date']
 
@@ -89,6 +92,9 @@ def check_streak_reset(user_id):
     """
     db = get_db()
     stats = get_user_stats(user_id)
+    if not stats:
+        return  # Пользователь удалён, ничего не делаем
+
     last = stats['last_activity_date']
     if not last:
         return
@@ -113,6 +119,9 @@ def get_daily_progress(user_id):
     """
     db = get_db()
     stats = get_user_stats(user_id)
+    if not stats:
+        return None
+
     today = datetime.date.today().isoformat()
 
     activity = db.execute(
@@ -275,7 +284,7 @@ def login():
         db.commit()
 
         stats = get_user_stats(user['id'])
-        if not stats['has_onboarded']:
+        if not stats or not stats['has_onboarded']:
             return redirect(url_for('onboarding'))
 
         return redirect(url_for('dashboard'))
@@ -363,7 +372,7 @@ def dashboard():
     db = get_db()
     stats = get_user_stats(user['id'])
 
-    if not stats['has_onboarded']:
+    if not stats or not stats['has_onboarded']:
         return redirect(url_for('onboarding'))
 
     user_courses = db.execute('''
