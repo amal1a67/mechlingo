@@ -4,6 +4,47 @@
 {% block content %}
 <div class="page-container">
 
+    <!-- ✅ Виджет ежедневной цели -->
+    <div class="daily-goal-card" id="daily-goal-card" data-goal-reached="{{ 'true' if daily and daily.goal_reached else 'false' }}">
+        <div class="daily-goal-header">
+            <div class="daily-goal-title">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="6"/>
+                    <circle cx="12" cy="12" r="2"/>
+                </svg>
+                <span>Цель на сегодня</span>
+            </div>
+            <div class="daily-goal-value">
+                <span id="daily-xp">{{ daily.xp_today if daily else 0 }}</span>
+                <span class="daily-goal-total">/ {{ daily.goal if daily else 50 }} XP</span>
+            </div>
+        </div>
+
+        <div class="daily-goal-progress">
+            <div class="daily-goal-fill" id="daily-fill" style="width: {{ daily.percent if daily else 0 }}%"></div>
+        </div>
+
+        <div class="daily-week" id="daily-week">
+            {% if daily and daily.week %}
+                {% for day in daily.week %}
+                <div class="daily-day {% if day.goal_reached %}done{% endif %} {% if day.is_today %}today{% endif %}"
+                     title="{{ day.date }} — {{ day.xp }} XP">
+                    <div class="daily-day-name">{{ day.day_name }}</div>
+                    <div class="daily-day-circle">
+                        {% if day.goal_reached %}
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Приветствие -->
     <div class="welcome-card">
         <div class="welcome-text">
             <h1>{{ user.username }}</h1>
