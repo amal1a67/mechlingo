@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, g
 from database import get_db, init_db, close_db
-import hashlib, os, datetime, json, random
+import hashlib, os, datetime, json
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'mechlingo-secret-key-change-in-production')
@@ -75,7 +75,7 @@ def update_streak(user_id):
 def check_streak_reset(user_id):
     """
     Вызывается на каждом запросе. Если пользователь пропустил день (или больше) —
-    стрик сбрасывается в 0. Не сбрасывает в 1 — это делает update_streak при новом уроке.
+    стрик сбрасывается в 0.
     """
     db = get_db()
     stats = get_user_stats(user_id)
@@ -717,4 +717,4 @@ def api_stats():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=False)
+    app.run(host='0.0.0.0', port=port, debug=True)  # ВКЛЮЧЕН DEBUG!
