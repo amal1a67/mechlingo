@@ -1,3 +1,133 @@
+/* ==================== DAILY GOAL ==================== */
+.daily-goal-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    display: block; /* Защита от случайного flex снаружи */
+}
+
+.daily-goal-card[data-goal-reached="true"] {
+    border-color: var(--success);
+    background: linear-gradient(135deg, var(--bg-elevated), var(--success-light));
+}
+
+.daily-goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.daily-goal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.daily-goal-title svg {
+    color: var(--primary);
+}
+
+.daily-goal-card[data-goal-reached="true"] .daily-goal-title svg {
+    color: var(--success);
+}
+
+.daily-goal-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.daily-goal-value span:first-child {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.daily-goal-total {
+    color: var(--text-muted);
+}
+
+.daily-goal-progress {
+    height: 10px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    width: 100%;
+}
+
+.daily-goal-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a78bfa);
+    border-radius: 100px;
+    transition: width 0.6s ease;
+}
+
+.daily-goal-card[data-goal-reached="true"] .daily-goal-fill {
+    background: linear-gradient(90deg, var(--success), #4ade80);
+}
+
+/* Неделя */
+.daily-week {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 4px;
+}
+
+.daily-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.daily-day-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.daily-day-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent; /* Галочка внутри скрыта, пока день не выполнен */
+    transition: all 0.2s ease;
+}
+
+.daily-day.done .daily-day-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: white; /* Показываем галочку */
+}
+
+.daily-day.today .daily-day-circle {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.daily-day.today.done .daily-day-circle {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-light);
+}
+
 /* ==================== ПЕРЕМЕННЫЕ ==================== */
 :root, [data-theme="light"] {
     --primary: #7c3aed;
