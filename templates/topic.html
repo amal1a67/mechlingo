@@ -12,15 +12,13 @@
         Назад к разделу
     </a>
 
-    <div class="topic-hero" style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; text-align: center; margin-bottom: 40px;">
-        <div style="width: 64px; height: 64px; border-radius: 16px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px;">
-            {{ topic.icon or '📝' }}
-        </div>
-        <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">{{ topic.name }}</h1>
-        <p style="color: var(--text-secondary); font-size: 15px;">{{ topic.description or course.name }}</p>
+    <div class="topic-hero">
+        <div class="topic-hero-icon">{{ topic.icon or '📝' }}</div>
+        <h1>{{ topic.name }}</h1>
+        <p>{{ topic.description or course.name }}</p>
     </div>
 
-    <!-- КАРТА-ЗМЕЙКА -->
+    <!-- КАРТА-ЗМЕЙКА (правильная структура под новый CSS) -->
     <div class="map-container">
         <div class="map-path">
             {% for item in levels %}
