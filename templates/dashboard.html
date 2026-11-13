@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block title %}Главная — MechLingo{% endblock %}
 {% set active = 'dashboard' %}
+
 {% block content %}
 <div class="page-container">
 
@@ -44,6 +45,20 @@
         </div>
     </div>
 
+    <!-- 🎓 Блок Пробного Экзамена -->
+    <div class="welcome-card" style="border-color: #f59e0b; background: linear-gradient(135deg, var(--bg-elevated), #fffbeb); margin-bottom: 24px;">
+        <div class="welcome-text" style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                🎓
+            </div>
+            <div>
+                <h1 style="font-size: 18px; margin-bottom: 4px;">Готовы к сессии?</h1>
+                <p style="color: var(--text-secondary); font-size: 14px;">Проверьте свои знания в режиме реального экзамена (20 вопросов, 15 минут)</p>
+            </div>
+        </div>
+        <a href="/exam" class="btn btn-primary btn-lg" style="background: #d97706; border-color: #d97706;">Сдать экзамен</a>
+    </div>
+
     <!-- Приветствие -->
     <div class="welcome-card">
         <div class="welcome-text">
@@ -56,6 +71,7 @@
         </div>
     </div>
 
+    <!-- Мои курсы -->
     <section class="section">
         <div class="section-header">
             <h2>Мои курсы</h2>
@@ -88,6 +104,7 @@
         {% endif %}
     </section>
 
+    <!-- Доступные курсы -->
     {% if all_courses %}
     <section class="section">
         <h2>Доступные курсы</h2>
