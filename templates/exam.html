@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% block title %}Пробный экзамен — MechLingo{% endblock %}
+{% set active = 'dashboard' %}
+
+{% block content %}
+<div class="level-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
+    
+    <!-- Экран старта -->
+    <div id="startScreen" style="text-align: center; padding: 60px 20px;">
+        <div style="font-size: 80px; margin-bottom: 20px;">🎓</div>
+        <h1 style="font-size: 32px; margin-bottom: 10px;">Пробный экзамен</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 16px; max-width: 500px; margin-left: auto; margin-right: auto;">
+            Вам будет предложено 20 случайных вопросов. Время на выполнение — 15 минут. 
+            У вас не будет подсказок и жизней. Удачи!
+        </p>
+        <button class="btn btn-primary btn-lg" onclick="startExam()" style="padding: 16px 40px; font-size: 18px;">
+            Начать экзамен
+        </button>
+    </div>
+
+    <!-- Экран экзамена (скрыт по умолчанию) -->
+    <div id="examScreen" style="display: none;">
+        
+        <!-- Шапка с таймером и прогрессом -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+            <div style="font-weight: 700; font-size: 16px; color: var(--text-secondary);" id="questionCounter">
+                Вопрос 1 из 20
+            </div>
+            <div id="timerDisplay" style="font-size: 24px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums;">
+                15:00
+            </div>
+        </div>
+
+        <!-- Текст вопроса -->
+        <div class="question-text" id="examQuestionText" style="font-size: 22px; margin-bottom: 30px;"></div>
+
+        <!-- Варианты ответов -->
+        <div class="options-list" id="examOptions"></div>
+
+        <!-- Кнопки навигации -->
+        <div style="display: flex; justify-content: space-between; margin-top: 40px;">
+            <button class="btn btn-outline" id="prevBtn" onclick="prevQuestion()" style="display: none;">Назад</button>
+            <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" style="margin-left: auto;">Далее</button>
+        </div>
+    </div>
+
+    <!-- Экран результатов (скрыт) -->
+    <div id="resultScreen" style="display: none; text-align: center; padding: 40px 20px;">
+        <div style="font-size: 80px; margin-bottom: 20px;" id="resultEmoji">🏆</div>
+        <h1 style="font-size: 32px; margin-bottom: 10px;" id="resultTitle">Экзамен сдан!</h1>
+        <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 30px;">
+            Вы ответили правильно на <span id="correctCount" style="font-weight: 800; color: var(--primary);">14</span> из <span id="totalCount">20</span>
+        </p>
+        <div style="font-size: 48px; font-weight: 800; color: var(--primary); margin-bottom: 40px;" id="percentScore">70%</div>
+        
+        <div style="display: flex; gap: 12px; justify-content: center;">
+            <a href="/dashboard" class="btn btn-primary btn-lg">На главную</a>
+            <button class="btn btn-outline btn-lg" onclick="location.reload()">Пройти заново</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let questions = [];
+let answers = []; // Массив выбранных ответов (индексы)
+let currentIndex = 0;
+let timeLeft = 15 * 60; // 15 минут в секундах
+let timerInterval = null;
+
+function startExam() {
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('examScreen').style.display = 'block';
+
+    // Загружаем вопросы с сервера
+    fetch('/api/exam/start')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.questions || data.questions.length === 0) {
+                alert('В базе пока нет вопросов для экзамена!');
+                window.location.href = '/dashboard';
+                return;
+            }
+            
+            questions = data.questions;
+            answers = new Array(questions.length).fill(null);
+            document.getElementById('totalCount').textContent = questions.length;
+            
+            // Запускаем таймер
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                if (timeLeft <= 0) {
+                    finishExam();
+                }
+            }, 1000);
+
+            renderExamQuestion();
+        });
+}
+
+function updateTimerDisplay() {
+    const minutes = Math.floor(timeLeft / 60);
+    const seconds = timeLeft % 60;
+    document.getElementById('timerDisplay').textContent = 
+        `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    
+    if (timeLeft < 60) {
+        document.getElementById('timerDisplay').style.color = 'var(--danger)';
+    }
+}
+
+function renderExamQuestion() {
+    const q = questions[currentIndex];
+    document.getElementById('questionCounter').textContent = `Вопрос ${currentIndex + 1} из ${questions.length}`;
+    document.getElementById('examQuestionText').textContent = q.question;
+
+    const optionsContainer = document.getElementById('examOptions');
+    optionsContainer.innerHTML = '';
+
+    q.options.forEach((opt, i) => {
+        const letter = String.fromCharCode(65 + i);
+        const isSelected = answers[currentIndex] === opt;
+        
+        const btn = document.createElement('button');
+        btn.className = `option-btn ${isSelected ? 'selected' : ''}`;
+        btn.style.borderColor = isSelected ? 'var(--primary)' : 'var(--border)';
+        btn.style.background = isSelected ? 'var(--primary-light)' : 'var(--bg-elevated)';
+        
+        btn.innerHTML = `
+            <span class="option-letter" style="${isSelected ? 'background: var(--primary); border-color: var(--primary); color: white;' : ''}">${letter}</span>
+            <span class="option-text">${opt}</span>
+        `;
+        
+        btn.onclick = () => selectExamAnswer(opt, btn);
+        optionsContainer.appendChild(btn);
+    });
+
+    // Управление кнопками
+    document.getElementById('prevBtn').style.display = currentIndex > 0 ? 'block' : 'none';
+    const nextBtn = document.getElementById('nextBtn');
+    
+    if (currentIndex === questions.length - 1) {
+        nextBtn.textContent = 'Завершить экзамен';
+        nextBtn.style.background = 'var(--success)';
+        nextBtn.onclick = finishExam;
+    } else {
+        nextBtn.textContent = 'Далее';
+        nextBtn.style.background = 'var(--primary)';
+        nextBtn.onclick = nextQuestion;
+    }
+}
+
+function selectExamAnswer(opt, btn) {
+    answers[currentIndex] = opt;
+    
+    // Снимаем выделение со всех кнопок
+    document.querySelectorAll('#examOptions .option-btn').forEach(b => {
+        b.style.borderColor = 'var(--border)';
+        b.style.background = 'var(--bg-elevated)';
+        b.querySelector('.option-letter').style.background = 'var(--bg)';
+        b.querySelector('.option-letter').style.borderColor = 'var(--border)';
+        b.querySelector('.option-letter').style.color = 'var(--text-secondary)';
+    });
+
+    // Выделяем выбранную
+    btn.style.borderColor = 'var(--primary)';
+    btn.style.background = 'var(--primary-light)';
+    btn.querySelector('.option-letter').style.background = 'var(--primary)';
+    btn.querySelector('.option-letter').style.borderColor = 'var(--primary)';
+    btn.querySelector('.option-letter').style.color = 'white';
+}
+
+function prevQuestion() {
+    if (currentIndex > 0) {
+        currentIndex--;
+        renderExamQuestion();
+    }
+}
+
+function nextQuestion() {
+    if (currentIndex < questions.length - 1) {
+        currentIndex++;
+        renderExamQuestion();
+    }
+}
+
+function finishExam() {
+    clearInterval(timerInterval);
+    document.getElementById('examScreen').style.display = 'none';
+
+    // Считаем результаты
+    let correct = 0;
+    questions.forEach((q, i) => {
+        if (answers[i] === q.correct_answer) {
+            correct++;
+        }
+    });
+
+    const percent = Math.round((correct / questions.length) * 100);
+    
+    document.getElementById('correctCount').textContent = correct;
+    document.getElementById('percentScore').textContent = `${percent}%`;
+    document.getElementById('resultScreen').style.display = 'block';
+
+    const emoji = document.getElementById('resultEmoji');
+    const title = document.getElementById('resultTitle');
+
+    if (percent >= 80) {
+        emoji.textContent = '🏆';
+        title.textContent = 'Отличный результат!';
+        title.style.color = 'var(--success)';
+    } else if (percent >= 60) {
+        emoji.textContent = '👍';
+        title.textContent = 'Экзамен сдан!';
+        title.style.color = 'var(--primary)';
+    } else {
+        emoji.textContent = '📚';
+        title.textContent = 'Нужно повторить материал';
+        title.style.color = 'var(--danger)';
+    }
+}
+</script>
+
+<style>
+/* Стили для выбранного варианта в экзамене */
+.option-btn.selected {
+    border-color: var(--primary);
+    background: var(--primary-light);
+}
+
+/* Убираем эффект наведения для экзамена, чтобы не путать */
+#examOptions .option-btn:hover {
+    transform: none;
+    box-shadow: none;
+}
+</style>
+{% endblock %}
