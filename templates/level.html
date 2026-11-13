@@ -8,7 +8,6 @@
         <div class="level-progress-bar">
             <div class="level-progress-fill" id="progressFill" style="width: 0%"></div>
         </div>
-        <!-- Сердечки теперь рендерятся через JS (зависит от базы данных) -->
         <div class="level-hearts" id="heartsDisplay"></div>
     </div>
 
@@ -25,9 +24,14 @@
 
 </div>
 
+<!-- Безопасная передача JSON из Flask в JS -->
+<script id="questions-data" type="application/json">
+    {{ questions | tojson | safe }}
+</script>
+
 <script>
-// Данные из Flask
-const QUESTIONS = {{ questions|tojson|safe }};
+// Читаем данные из безопасного тега
+const QUESTIONS = JSON.parse(document.getElementById('questions-data').textContent);
 const LEVEL_ID = {{ level.id }};
 
 let currentIndex = 0;
@@ -35,7 +39,6 @@ let correctCount = 0;
 let answered = false;
 
 // === УПРАВЛЕНИЕ ЖИЗНЯМИ ===
-// Берем жизни из глобального объекта Stats (который в base.html)
 let lives = Stats.current.hearts;
 
 function updateHeartsDisplay() {
@@ -110,7 +113,10 @@ function selectAnswer(letter, btn) {
     answered = true;
 
     const q = QUESTIONS[currentIndex];
-    const isCorrect = letter === q.correct_answer;
+    
+    // Берем текст выбранного варианта (а не букву) для сравнения
+    const selectedText = btn.querySelector('.option-text').textContent.trim();
+    const isCorrect = selectedText === q.correct_answer.trim();
 
     // Отключаем все кнопки
     document.querySelectorAll('.option-btn').forEach(b => {
@@ -131,7 +137,8 @@ function selectAnswer(letter, btn) {
         
         // Находим правильную кнопку и подсвечиваем
         document.querySelectorAll('.option-btn').forEach(b => {
-            if (b.getAttribute('data-answer') === q.correct_answer) {
+            const optText = b.querySelector('.option-text').textContent.trim();
+            if (optText === q.correct_answer.trim()) {
                 b.classList.add('correct');
             }
         });
@@ -149,12 +156,12 @@ function selectAnswer(letter, btn) {
     feedback.classList.add('visible');
     document.getElementById('nextBtn').style.display = 'block';
 
-    // Если жизни кончились — не даем нажать "Продолжить", а показываем модалку
+    // Если жизни кончились
     if (lives <= 0) {
         document.getElementById('nextBtn').style.display = 'none';
         setTimeout(() => {
             showOutOfHeartsModal();
-        }, 1200); // Небольшая задержка, чтобы юзер увидел правильный ответ
+        }, 1200);
     }
 }
 
@@ -180,7 +187,6 @@ async function finishLevel() {
         const data = await response.json();
 
         if (data.success) {
-            // Обновляем данные в шапке (из base.html)
             Stats.setXp(data.total_xp);
             Stats.setStreak(data.streak);
             if (data.level_up) {
@@ -230,7 +236,6 @@ function showResult(data) {
     document.getElementById('progressFill').style.width = '100%';
     document.getElementById('feedbackBar').classList.remove('visible');
 
-    // Показываем тосты после завершения
     if (data.xp_earned > 0) {
         Toast.show('xp', `+${data.xp_earned} XP`, 'Опыт добавлен в копилку');
     }
@@ -240,15 +245,26 @@ function showResult(data) {
             Toast.show('success', 'Цель дня выполнена! ✅', `Стрик: ${data.streak} дн. 🔥`);
         }, 800);
     }
+
+    if (data.new_achievements && data.new_achievements.length > 0) {
+        data.new_achievements.forEach((ach, i) => {
+            setTimeout(() => {
+                Toast.show('level', 'Новое достижение!', ach);
+            }, 1200 + i * 500);
+        });
+    }
 }
 
 document.getElementById('nextBtn').addEventListener('click', nextQuestion);
 
 // Старт
-renderQuestion();
+if (QUESTIONS && QUESTIONS.length > 0) {
+    renderQuestion();
+} else {
+    document.getElementById('questionArea').innerHTML = '<div class="question-loading">В этом уровне пока нет вопросов.</div>';
+}
 </script>
 
-<!-- Стили оставляем без изменений (они у вас отличные) -->
 <style>
 .level-container { max-width: 720px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 100px); display: flex; flex-direction: column; }
 .level-progress { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
