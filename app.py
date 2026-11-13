@@ -259,7 +259,7 @@ def get_reviews_to_do(user_id):
           AND up.next_review_date <= ?
           AND up.next_review_date != ''
         ORDER BY up.next_review_date ASC
-        LIMIT 5
+        LIMIT 20
     ''', [user_id, today]).fetchall()
     
     return reviews
@@ -489,14 +489,12 @@ def dashboard():
     ''', [user['id']]).fetchall()
 
     daily = get_daily_progress(user['id'])
-    reviews = get_reviews_to_do(user['id'])
 
     return render_template('dashboard.html',
                            user=user, stats=stats,
                            user_courses=user_courses,
                            all_courses=all_courses,
-                           daily=daily,
-                           reviews=reviews)
+                           daily=daily)
 
 
 # ==================== КУРСЫ ====================
@@ -861,6 +859,21 @@ def api_exam_start():
         })
         
     return jsonify({'questions': q_list})
+
+
+# ==================== ПОВТОРЕНИЕ ====================
+
+@app.route('/reviews')
+@login_required
+def reviews_page():
+    user = get_user()
+    db = get_db()
+    stats = get_user_stats(user['id'])
+    reviews = get_reviews_to_do(user['id'])
+    
+    return render_template('reviews.html', 
+                           user=user, stats=stats, 
+                           reviews=reviews)
 
 
 # ==================== ЛИДЕРБОРД ====================
