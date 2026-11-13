@@ -45,6 +45,24 @@
         </div>
     </div>
 
+    <!-- 🔄 Блок повторения (SRS) -->
+    {% if reviews %}
+    <div class="welcome-card" style="border-color: var(--success); background: linear-gradient(135deg, var(--bg-elevated), var(--success-light)); margin-bottom: 24px;">
+        <div class="welcome-text" style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: #dcfce7; color: #16a34a; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                🔄
+            </div>
+            <div>
+                <h1 style="font-size: 18px; margin-bottom: 4px;">Пора повторить!</h1>
+                <p style="color: var(--text-secondary); font-size: 14px;">Вы давно не повторяли эти темы. Мозг начинает забывать.</p>
+            </div>
+        </div>
+        <a href="/level/{{ reviews[0].level_id }}" class="btn btn-primary btn-lg" style="background: #16a34a; border-color: #16a34a;">
+            Повторить ({{ reviews|length }})
+        </a>
+    </div>
+    {% endif %}
+
     <!-- 🎓 Блок Пробного Экзамена -->
     <div class="welcome-card" style="border-color: #f59e0b; background: linear-gradient(135deg, var(--bg-elevated), #fffbeb); margin-bottom: 24px;">
         <div class="welcome-text" style="display: flex; align-items: center; gap: 16px;">
