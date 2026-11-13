@@ -491,12 +491,14 @@ def dashboard():
     ''', [user['id']]).fetchall()
 
     daily = get_daily_progress(user['id'])
+    reviews = get_reviews_to_do(user['id'])
 
     return render_template('dashboard.html',
                            user=user, stats=stats,
                            user_courses=user_courses,
                            all_courses=all_courses,
-                           daily=daily)
+                           daily=daily,
+                           reviews=reviews)
 
 
 # ==================== КУРСЫ ====================
@@ -682,14 +684,16 @@ def level_view(level_id):
 
         q_list.append({
             'id': q['id'],
-            'question': q['question'],
-            'options': options,
-            'correct_answer': q['correct_answer'],
+            'question': q['question'] or "Вопрос",
+            'options': options if options else ["Да", "Нет"],
+            'correct_answer': q['correct_answer'] or "",
             'explanation': q['explanation'] or '',
-            'question_type': q['question_type'],
+            'question_type': q['question_type'] or 'test',
         })
 
     topic = db.execute('SELECT * FROM course_topics WHERE id=?', [level['topic_id']]).fetchone()
+    if not topic:
+        topic = {'id': 0, 'name': 'Неизвестно'}
 
     return render_template('level.html',
                            user=user, stats=stats, level=level, topic=topic, questions=q_list)
@@ -721,7 +725,6 @@ def api_complete_level(level_id):
     level = db.execute('SELECT * FROM course_levels WHERE id=?', [level_id]).fetchone()
     xp_earned = int(level['xp_reward'] * (percent / 100)) if percent >= 60 else 0
 
-    # --- user_progress (с расчетом SRS) ---
     today_date = datetime.date.today()
     if stars == 3:
         next_review = (today_date + datetime.timedelta(days=7)).isoformat()
