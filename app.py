@@ -179,7 +179,6 @@ def check_weekly_reset(user_id):
     else:
         try:
             last_date = datetime.date.fromisoformat(last_reset)
-            # Если с последнего сброса прошло 7 и более дней
             if (today - last_date).days >= 7:
                 need_reset = True
         except:
@@ -795,6 +794,43 @@ def api_complete_level(level_id):
         'daily': get_daily_progress(user['id']),
         'new_achievements': new_achievements,
     })
+
+
+# ==================== ЭКЗАМЕН ====================
+
+@app.route('/exam')
+@login_required
+def exam_setup():
+    user = get_user()
+    return render_template('exam.html', user=user, stats=get_user_stats(user['id']))
+
+
+@app.route('/api/exam/start', methods=['GET'])
+@login_required
+def api_exam_start():
+    db = get_db()
+    questions = db.execute('''
+        SELECT lq.* FROM level_questions lq
+        ORDER BY RANDOM()
+        LIMIT 20
+    ''').fetchall()
+    
+    q_list = []
+    for q in questions:
+        try:
+            options = json.loads(q['options_json']) if q['options_json'] else []
+        except:
+            options = []
+            
+        q_list.append({
+            'id': q['id'],
+            'question': q['question'],
+            'options': options,
+            'correct_answer': q['correct_answer'],
+            'explanation': q['explanation'] or '',
+        })
+        
+    return jsonify({'questions': q_list})
 
 
 # ==================== ЛИДЕРБОРД ====================
