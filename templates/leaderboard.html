@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Рейтинг — MechLingo{% endblock %}
+{% set active = 'leaderboard' %}
+
+{% block content %}
+<div class="page-container">
+    
+    <div class="page-header" style="text-align: center; margin-bottom: 40px;">
+        <div style="font-size: 64px; margin-bottom: 10px;">🏆</div>
+        <h1>Зал славы</h1>
+        <p class="page-subtitle">Соревнование по недельному XP (сбрасывается каждый понедельник)</p>
+    </div>
+
+    <div style="max-width: 600px; margin: 0 auto;">
+        
+        <!-- Ваша позиция -->
+        <div class="welcome-card" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
+            <div class="welcome-text">
+                <h1 style="font-size: 16px;">Ваш результат</h1>
+                <p>{{ stats.weekly_xp or 0 }} XP за эту неделю</p>
+            </div>
+            <div class="streak-big" style="font-size: 24px; color: var(--primary);">
+                #{{ top_users|length + 1 if stats.weekly_xp == 0 else '?' }}
+            </div>
+        </div>
+
+        <!-- Список лидеров -->
+        <div class="sections-list">
+            {% for u in top_users %}
+            <div class="section-card" style="{% if u.username == user.username %}border-color: var(--primary); background: var(--primary-light);{% endif %}">
+                
+                <div style="width: 30px; font-size: 18px; font-weight: 800; color: {% if loop.index == 1 %}#fbbf24{% elif loop.index == 2 %}#94a3b8{% elif loop.index == 3 %}#b45309{% else %}var(--text-muted){% endif %}; text-align: center;">
+                    {{ loop.index }}
+                </div>
+
+                <div class="user-avatar" style="width: 40px; height: 40px; font-size: 16px; margin-left: 10px;">
+                    {{ u.username[0]|upper }}
+                </div>
+
+                <div class="section-info" style="margin-left: 12px;">
+                    <div class="section-name" style="font-size: 15px;">
+                        {{ u.username }}
+                        {% if u.username == user.username %}(Вы){% endif %}
+                    </div>
+                    <div class="section-desc">Уровень {{ u.level }} · 🔥 {{ u.streak }}</div>
+                </div>
+
+                <div style="font-weight: 800; font-size: 16px; color: var(--primary);">
+                    {{ u.weekly_xp }} XP
+                </div>
+            </div>
+            {% endfor %}
+            
+            {% if not top_users %}
+            <div class="empty-state">
+                <div class="empty-title">Пока тихо</div>
+                <div class="empty-text">Никто еще не набрал XP на этой неделе. Будьте первым!</div>
+                <a href="/dashboard" class="btn btn-primary" style="margin-top: 16px;">Начать учиться</a>
+            </div>
+            {% endif %}
+        </div>
+        
+    </div>
+</div>
+{% endblock %}
