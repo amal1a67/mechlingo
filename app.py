@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, g
 from database import get_db, init_db, close_db
 import hashlib, os, datetime, json
+import csv
+import io
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'mechlingo-secret-key-change-in-production')
@@ -921,6 +923,60 @@ def profile():
                            user_courses=user_courses,
                            all_achievements=all_achievements,
                            earned_ids=earned_ids)
+
+
+# ==================== ИМПОРТ ВОПРОСОВ ====================
+
+@app.route('/admin/import', methods=['GET', 'POST'])
+@login_required
+def admin_import():
+    user = get_user()
+    db = get_db()
+    stats = get_user_stats(user['id'])
+    
+    if request.method == 'POST':
+        if 'csv_file' not in request.files:
+            return render_template('admin_import.html', user=user, stats=stats, error="Файл не выбран")
+        
+        file = request.files['csv_file']
+        if file.filename == '':
+            return render_template('admin_import.html', user=user, stats=stats, error="Файл не выбран")
+        
+        if file and file.filename.endswith('.csv'):
+            try:
+                stream = io.StringIO(file.stream.read().decode("UTF8"), newline=None)
+                csv_input = csv.reader(stream, delimiter=';')
+                
+                header = next(csv_input)
+                count = 0
+                
+                for row in csv_input:
+                    if len(row) < 6:
+                        continue
+                    
+                    lvl_id = int(row[0])
+                    question = row[1]
+                    options = [row[2], row[3], row[4], row[5]]
+                    options = [opt for opt in options if opt.strip()]
+                    correct = row[6] if len(row) > 6 else row[2]
+                    
+                    options_json = json.dumps(options, ensure_ascii=False)
+                    
+                    db.execute('''
+                        INSERT INTO level_questions (level_id, question, options_json, correct_answer, explanation)
+                        VALUES (?, ?, ?, ?, ?)
+                    ''', [lvl_id, question, options_json, correct, "Импортировано из CSV"])
+                    count += 1
+                
+                db.commit()
+                return render_template('admin_import.html', user=user, stats=stats, success=f"Успешно загружено {count} вопросов!")
+                
+            except Exception as e:
+                return render_template('admin_import.html', user=user, stats=stats, error=f"Ошибка при чтении файла: {str(e)}")
+        else:
+            return render_template('admin_import.html', user=user, stats=stats, error="Разрешены только файлы .csv")
+            
+    return render_template('admin_import.html', user=user, stats=stats)
 
 
 # ==================== API ====================
