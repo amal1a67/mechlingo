@@ -1,133 +1,3 @@
-/* ==================== DAILY GOAL ==================== */
-.daily-goal-card {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px 24px;
-    margin-bottom: 24px;
-    transition: all 0.3s ease;
-    display: block; /* Защита от случайного flex снаружи */
-}
-
-.daily-goal-card[data-goal-reached="true"] {
-    border-color: var(--success);
-    background: linear-gradient(135deg, var(--bg-elevated), var(--success-light));
-}
-
-.daily-goal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 14px;
-}
-
-.daily-goal-title {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 700;
-    font-size: 15px;
-    color: var(--text);
-    letter-spacing: -0.01em;
-}
-
-.daily-goal-title svg {
-    color: var(--primary);
-}
-
-.daily-goal-card[data-goal-reached="true"] .daily-goal-title svg {
-    color: var(--success);
-}
-
-.daily-goal-value {
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
-}
-
-.daily-goal-value span:first-child {
-    color: var(--primary);
-    font-weight: 700;
-    font-size: 16px;
-}
-
-.daily-goal-total {
-    color: var(--text-muted);
-}
-
-.daily-goal-progress {
-    height: 10px;
-    background: var(--border);
-    border-radius: 100px;
-    overflow: hidden;
-    margin-bottom: 18px;
-    width: 100%;
-}
-
-.daily-goal-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--primary), #a78bfa);
-    border-radius: 100px;
-    transition: width 0.6s ease;
-}
-
-.daily-goal-card[data-goal-reached="true"] .daily-goal-fill {
-    background: linear-gradient(90deg, var(--success), #4ade80);
-}
-
-/* Неделя */
-.daily-week {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    gap: 4px;
-}
-
-.daily-day {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-}
-
-.daily-day-name {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-}
-
-.daily-day-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 2px solid var(--border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: transparent; /* Галочка внутри скрыта, пока день не выполнен */
-    transition: all 0.2s ease;
-}
-
-.daily-day.done .daily-day-circle {
-    background: var(--success);
-    border-color: var(--success);
-    color: white; /* Показываем галочку */
-}
-
-.daily-day.today .daily-day-circle {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px var(--primary-glow);
-}
-
-.daily-day.today.done .daily-day-circle {
-    border-color: var(--success);
-    box-shadow: 0 0 0 3px var(--success-light);
-}
-
 /* ==================== ПЕРЕМЕННЫЕ ==================== */
 :root, [data-theme="light"] {
     --primary: #7c3aed;
@@ -712,6 +582,135 @@ svg { display: block; }
     margin-top: 2px;
 }
 
+/* ==================== DAILY GOAL ==================== */
+.daily-goal-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    display: block;
+}
+
+.daily-goal-card[data-goal-reached="true"] {
+    border-color: var(--success);
+    background: linear-gradient(135deg, var(--bg-elevated), var(--success-light));
+}
+
+.daily-goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.daily-goal-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.daily-goal-title svg {
+    color: var(--primary);
+}
+
+.daily-goal-card[data-goal-reached="true"] .daily-goal-title svg {
+    color: var(--success);
+}
+
+.daily-goal-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.daily-goal-value span:first-child {
+    color: var(--primary);
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.daily-goal-total {
+    color: var(--text-muted);
+}
+
+.daily-goal-progress {
+    height: 10px;
+    background: var(--border);
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 18px;
+    width: 100%;
+}
+
+.daily-goal-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), #a78bfa);
+    border-radius: 100px;
+    transition: width 0.6s ease;
+}
+
+.daily-goal-card[data-goal-reached="true"] .daily-goal-fill {
+    background: linear-gradient(90deg, var(--success), #4ade80);
+}
+
+.daily-week {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    gap: 4px;
+}
+
+.daily-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.daily-day-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.daily-day-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: transparent;
+    transition: all 0.2s ease;
+}
+
+.daily-day.done .daily-day-circle {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.daily-day.today .daily-day-circle {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-glow);
+}
+
+.daily-day.today.done .daily-day-circle {
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-light);
+}
+
 /* ==================== CARDS ==================== */
 .courses-grid {
     display: grid;
@@ -781,7 +780,6 @@ svg { display: block; }
 }
 
 .course-card-form { display: contents; }
-
 .course-card-add { cursor: pointer; }
 
 .btn-add-icon {
@@ -1803,7 +1801,7 @@ svg { display: block; }
     font-weight: 500;
 }
 
-/* ==================== DUOLINGO PATH ==================== */
+/* ==================== DUOLINGO PATH (ПРАВИЛЬНАЯ ЗМЕЙКА) ==================== */
 .topic-hero {
     background: var(--bg-elevated);
     border: 1px solid var(--border);
@@ -1839,95 +1837,185 @@ svg { display: block; }
     font-size: 14px;
 }
 
-.duolingo-path {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0;
-    margin-top: 32px;
-    padding: 0 20px 60px;
+.map-container {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding-bottom: 80px;
 }
 
-.path-node {
+.map-path {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.map-node {
+    width: 100%;
+    display: flex;
+    position: relative;
+}
+
+.map-node.align-left {
+    justify-content: flex-start;
+    padding-left: 60px;
+}
+.map-node.align-right {
+    justify-content: flex-end;
+    padding-right: 60px;
+}
+
+.node-link {
     display: flex;
     flex-direction: column;
     align-items: center;
     text-decoration: none;
-    color: inherit;
+    position: relative;
     z-index: 2;
-    transition: transform 0.15s;
+    transition: transform 0.2s;
 }
 
-.path-node:not(.locked):hover { transform: scale(1.04); }
-
-.path-node.locked { cursor: not-allowed; opacity: 0.4; }
+.node-link:not(.locked):hover {
+    transform: scale(1.05);
+}
 
 .node-circle {
-    width: 72px;
-    height: 72px;
+    width: 84px;
+    height: 84px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     background: var(--bg-elevated);
-    border: 2px solid var(--border);
-    transition: all 0.15s;
-    margin-bottom: 10px;
-    color: var(--text-secondary);
+    border: 4px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.2s;
+    box-shadow: 0 8px 0 var(--border);
 }
 
-.node-circle.completed {
+.node-circle.is-completed {
     background: var(--success);
     border-color: var(--success);
     color: white;
+    box-shadow: 0 8px 0 #15803d;
 }
 
-.node-circle.current {
+.node-circle.is-current {
     background: var(--primary);
     border-color: var(--primary);
     color: white;
-    box-shadow: 0 0 0 6px var(--primary-glow);
+    box-shadow: 0 8px 0 var(--primary-dark);
 }
 
-.node-circle.locked {
-    background: var(--bg);
-    border-color: var(--border);
-    color: var(--text-muted);
+.node-circle.is-current svg {
+    transform: translateX(4px);
 }
 
-.node-label {
-    font-weight: 600;
-    font-size: 13px;
-    text-align: center;
-    max-width: 120px;
+.node-link:not(.locked):active .node-circle {
+    transform: translateY(8px);
+    box-shadow: 0 0 0 transparent;
+}
+
+.node-title {
+    font-weight: 800;
+    font-size: 16px;
     color: var(--text);
+    margin-top: 16px;
+    text-align: center;
+    letter-spacing: -0.01em;
+}
+
+.node-link.locked .node-title {
+    color: var(--text-muted);
 }
 
 .node-stars {
-    margin-top: 6px;
     display: flex;
-    gap: 2px;
+    gap: 4px;
+    margin-top: 6px;
 }
 
 .star {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 16px;
+    color: var(--border);
 }
 
 .star.filled {
     color: #fbbf24;
 }
 
-.path-connector {
-    width: 2px;
-    height: 32px;
-    background: var(--border);
-    border-radius: 2px;
-    margin: -6px 0;
+.node-avatar {
+    position: absolute;
+    top: -56px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    animation: floatAvatar 2s ease-in-out infinite;
+    pointer-events: none;
 }
 
-.path-connector.done {
-    background: var(--success);
+.avatar-bubble {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    border: 4px solid var(--bg);
+    box-shadow: var(--shadow-lg);
+}
+
+.avatar-bubble::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid var(--bg);
+}
+
+@keyframes floatAvatar {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, -6px); }
+}
+
+/* Соединительная линия */
+.map-path {
+    position: relative;
+}
+
+.map-path::before {
+    content: '';
+    position: absolute;
+    top: 40px;
+    bottom: 40px;
+    left: 50%;
+    width: 8px;
+    background: var(--border);
+    border-radius: 8px;
+    transform: translateX(-50%);
+    z-index: 1;
+    opacity: 0.6;
+}
+
+@media (max-width: 600px) {
+    .map-node.align-left { padding-left: 20px; }
+    .map-node.align-right { padding-right: 20px; }
+    
+    .node-circle { width: 72px; height: 72px; box-shadow: 0 6px 0 var(--border); }
+    .node-circle.is-completed { box-shadow: 0 6px 0 #15803d; }
+    .node-circle.is-current { box-shadow: 0 6px 0 var(--primary-dark); }
+    
+    .node-circle svg { width: 26px; height: 26px; }
+    .node-avatar { top: -46px; }
+    .avatar-bubble { width: 38px; height: 38px; font-size: 16px; }
+    .node-title { font-size: 14px; }
 }
 
 /* ==================== LEVEL ==================== */
@@ -1949,7 +2037,7 @@ svg { display: block; }
 
 .level-progress-bar {
     flex: 1;
-    height: 8px;
+    height: 16px;
     background: var(--border);
     border-radius: 100px;
     overflow: hidden;
@@ -1957,7 +2045,7 @@ svg { display: block; }
 
 .level-progress-fill {
     height: 100%;
-    background: var(--primary);
+    background: linear-gradient(90deg, var(--primary), #a78bfa);
     border-radius: 100px;
     transition: width 0.4s ease;
 }
@@ -1965,7 +2053,8 @@ svg { display: block; }
 .level-hearts {
     display: flex;
     gap: 4px;
-    color: #ef4444;
+    font-size: 20px;
+    letter-spacing: 2px;
 }
 
 .question-area { flex: 1; }
@@ -1974,44 +2063,44 @@ svg { display: block; }
     text-align: center;
     color: var(--text-secondary);
     padding: 60px 0;
-    font-size: 14px;
+    font-size: 15px;
 }
 
-.question-header { margin-bottom: 14px; }
+.question-header { margin-bottom: 16px; }
 
 .question-number {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 800;
     color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
 }
 
 .question-text {
-    font-size: 22px;
-    font-weight: 700;
-    line-height: 1.35;
+    font-size: 24px;
+    font-weight: 800;
+    line-height: 1.4;
     letter-spacing: -0.02em;
-    margin-bottom: 28px;
+    margin-bottom: 32px;
     color: var(--text);
 }
 
 .options-list {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .option-btn {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 18px;
+    gap: 16px;
+    padding: 18px 20px;
     background: var(--bg-elevated);
-    border: 2px solid var(--border);
-    border-radius: var(--radius);
-    font-size: 15px;
-    font-weight: 500;
+    border: 3px solid var(--border);
+    border-radius: var(--radius-lg);
+    font-size: 16px;
+    font-weight: 600;
     text-align: left;
     color: var(--text);
     transition: all 0.15s;
@@ -2022,45 +2111,57 @@ svg { display: block; }
 
 .option-btn:hover:not(.disabled) {
     border-color: var(--primary);
-    background: var(--primary-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 var(--primary-light);
 }
 
 .option-letter {
-    width: 30px;
-    height: 30px;
-    border-radius: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     background: var(--bg);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
+    font-weight: 900;
     flex-shrink: 0;
-    border: 1.5px solid var(--border);
-    font-size: 13px;
-    color: var(--text-secondary);
+    border: 2px solid var(--border);
+    font-size: 16px;
 }
 
 .option-btn.correct {
-    background: var(--success-light);
-    border-color: var(--success);
-    color: var(--success);
+    background: #dcfce7;
+    border-color: #16a34a;
+    color: #14532d;
+}
+
+[data-theme="dark"] .option-btn.correct {
+    background: #14532d;
+    border-color: #22c55e;
+    color: #dcfce7;
 }
 
 .option-btn.correct .option-letter {
-    background: var(--success);
-    border-color: var(--success);
+    background: #16a34a;
+    border-color: #16a34a;
     color: white;
 }
 
 .option-btn.wrong {
-    background: var(--danger-light);
-    border-color: var(--danger);
-    color: var(--danger);
+    background: #fee2e2;
+    border-color: #dc2626;
+    color: #7f1d1d;
+}
+
+[data-theme="dark"] .option-btn.wrong {
+    background: #450a0a;
+    border-color: #ef4444;
+    color: #fecaca;
 }
 
 .option-btn.wrong .option-letter {
-    background: var(--danger);
-    border-color: var(--danger);
+    background: #dc2626;
+    border-color: #dc2626;
     color: white;
 }
 
@@ -2075,10 +2176,11 @@ svg { display: block; }
     margin: 32px -20px -20px;
     padding: 20px;
     background: var(--bg-elevated);
-    border-top: 1px solid var(--border);
+    border-top: 2px solid var(--border);
+    border-radius: 0;
     transform: translateY(100%);
     opacity: 0;
-    transition: all 0.25s ease;
+    transition: all 0.3s ease;
 }
 
 .feedback-bar.visible {
@@ -2087,19 +2189,21 @@ svg { display: block; }
 }
 
 .feedback-message {
-    font-size: 17px;
-    font-weight: 700;
-    margin-bottom: 6px;
-    letter-spacing: -0.02em;
+    font-size: 20px;
+    font-weight: 900;
+    margin-bottom: 8px;
 }
 
-.feedback-message.success { color: var(--success); }
-.feedback-message.error { color: var(--danger); }
+.feedback-message.success { color: #16a34a; }
+.feedback-message.error { color: #dc2626; }
+
+[data-theme="dark"] .feedback-message.success { color: #22c55e; }
+[data-theme="dark"] .feedback-message.error { color: #ef4444; }
 
 .feedback-explanation {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-secondary);
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     line-height: 1.5;
 }
 
@@ -2107,64 +2211,71 @@ svg { display: block; }
 .result-screen {
     text-align: center;
     padding: 40px 20px;
-    animation: slideUp 0.3s ease;
+    animation: slideUp 0.4s ease;
 }
 
 @keyframes slideUp {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
 .result-emoji {
-    font-size: 56px;
-    margin-bottom: 12px;
+    font-size: 80px;
+    margin-bottom: 16px;
+    animation: bounce 0.6s ease;
+}
+
+@keyframes bounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
 }
 
 .result-screen h2 {
-    font-size: 26px;
-    font-weight: 800;
+    font-size: 32px;
+    font-weight: 900;
     letter-spacing: -0.03em;
-    margin-bottom: 14px;
-    color: var(--text);
+    margin-bottom: 16px;
+    color: var(--primary);
 }
 
 .result-stars {
-    font-size: 32px;
-    letter-spacing: 4px;
-    margin-bottom: 28px;
-    color: #fbbf24;
+    font-size: 44px;
+    letter-spacing: 6px;
+    margin-bottom: 32px;
 }
 
 .result-stats {
     display: flex;
     justify-content: center;
-    gap: 16px;
-    margin-bottom: 32px;
+    gap: 24px;
+    margin-bottom: 40px;
     flex-wrap: wrap;
 }
 
 .result-stat {
     background: var(--bg-elevated);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 20px;
-    font-size: 14px;
-    font-weight: 700;
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 16px 24px;
+    font-size: 18px;
+    font-weight: 800;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     color: var(--primary);
+}
+
+.result-stat-icon {
+    font-size: 22px;
 }
 
 .result-actions {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     justify-content: center;
     flex-wrap: wrap;
 }
-
-/* ==================== TEXT ==================== */
-.text-muted { color: var(--text-secondary); font-size: 13px; }
 
 /* ==================== RESPONSIVE ==================== */
 @media (max-width: 900px) {
@@ -2200,369 +2311,4 @@ svg { display: block; }
     .landing-footer { flex-direction: column; text-align: center; }
     .toast-container { left: 16px; right: 16px; }
     .toast { min-width: 0; max-width: 100%; }
-}
-/* ==================== DUOLINGO PATH (S-CURVE) ==================== */
-.duolingo-path {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px 0;
-    position: relative;
-    width: 100%;
-    max-width: 500px;
-    margin: 0 auto;
-}
-
-.path-node {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-decoration: none;
-    color: inherit;
-    position: relative;
-    z-index: 2;
-    transition: transform 0.2s;
-    width: 100px;
-}
-
-/* --- ЗМЕЙКА (Смещение узлов) --- */
-.path-node:nth-child(4n+1) { transform: translateX(60px); }  /* 1, 5, 9... */
-.path-node:nth-child(4n+2) { transform: translateX(20px); }  /* 2, 6, 10... */
-.path-node:nth-child(4n+3) { transform: translateX(-20px); } /* 3, 7, 11... */
-.path-node:nth-child(4n)   { transform: translateX(-60px); } /* 4, 8, 12... */
-
-.path-node:not(.locked):hover {
-    transform: scale(1.05) translateX(var(--x-offset, 0));
-}
-
-/* Чтобы hover не сбивал позицию, зададим кастомные переменные */
-.path-node:nth-child(4n+1):hover { transform: scale(1.05) translateX(60px); }
-.path-node:nth-child(4n+2):hover { transform: scale(1.05) translateX(20px); }
-.path-node:nth-child(4n+3):hover { transform: scale(1.05) translateX(-20px); }
-.path-node:nth-child(4n):hover   { transform: scale(1.05) translateX(-60px); }
-
-
-/* --- КРУЖКИ --- */
-.node-wrapper {
-    position: relative;
-}
-
-.node-circle {
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-elevated);
-    border: 3px solid var(--border);
-    color: var(--text-muted);
-    transition: all 0.2s;
-    box-shadow: 0 4px 0 var(--border); /* Эффект 3D-кнопки */
-}
-
-.node-circle.completed {
-    background: var(--success);
-    border-color: var(--success);
-    color: white;
-    box-shadow: 0 4px 0 #15803d;
-}
-
-.node-circle.current {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-    box-shadow: 0 4px 0 var(--primary-dark);
-}
-
-.node-circle.current svg {
-    transform: translateX(2px); /* Центрируем треугольник Play */
-}
-
-.path-node:not(.locked):active .node-circle {
-    transform: translateY(4px);
-    box-shadow: 0 0 0 transparent;
-}
-
-/* --- ТЕКСТ И ЗВЕЗДЫ --- */
-.node-label {
-    font-weight: 700;
-    font-size: 14px;
-    text-align: center;
-    margin-top: 10px;
-    color: var(--text);
-    letter-spacing: -0.01em;
-    max-width: 140px;
-}
-
-.path-node.locked .node-label {
-    color: var(--text-muted);
-}
-
-.node-stars {
-    display: flex;
-    gap: 2px;
-    margin-top: 4px;
-}
-
-.star {
-    font-size: 14px;
-    color: var(--border);
-}
-
-.star.filled {
-    color: #fbbf24;
-}
-
-/* --- АВАТАР НАД ТЕКУЩИМ УРОКНЕМ --- */
-.path-avatar {
-    position: absolute;
-    top: -46px;
-    left: 50%;
-    transform: translateX(-50%);
-    animation: floatAvatar 2s ease-in-out infinite;
-    z-index: 10;
-}
-
-.user-avatar-mini {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 16px;
-    border: 3px solid var(--bg);
-    box-shadow: var(--shadow);
-}
-
-/* Хвостик от аватара к кружку */
-.path-avatar::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 8px solid var(--bg);
-}
-
-@keyframes floatAvatar {
-    0%, 100% { transform: translate(-50%, 0); }
-    50% { transform: translate(-50%, -6px); }
-}
-
-/* --- СОЕДИНИТЕЛЬНЫЕ ЛИНИИ --- */
-.path-connector {
-    width: 6px;
-    height: 30px;
-    background: var(--border);
-    border-radius: 6px;
-    margin: -4px 0;
-    z-index: 1;
-}
-
-.path-connector.done {
-    background: var(--success);
-    opacity: 0.5;
-}
-
-/* Адаптив для мобилок (уменьшаем шаг) */
-@media (max-width: 600px) {
-    .path-node:nth-child(4n+1) { transform: translateX(40px); }
-    .path-node:nth-child(4n+2) { transform: translateX(15px); }
-    .path-node:nth-child(4n+3) { transform: translateX(-15px); }
-    .path-node:nth-child(4n)   { transform: translateX(-40px); }
-    
-    .path-node:nth-child(4n+1):hover { transform: scale(1.05) translateX(40px); }
-    .path-node:nth-child(4n+2):hover { transform: scale(1.05) translateX(15px); }
-    .path-node:nth-child(4n+3):hover { transform: scale(1.05) translateX(-15px); }
-    .path-node:nth-child(4n):hover   { transform: scale(1.05) translateX(-40px); }
-    
-    .node-circle { width: 64px; height: 64px; border-width: 2px; }
-    .node-circle svg { width: 24px; height: 24px; }
-}
-/* ==================== DUOLINGO PATH (НОВАЯ ЗМЕЙКА) ==================== */
-.duolingo-path {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 40px 0 100px;
-    position: relative;
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-}
-
-/* Обертка для каждого узла, чтобы аватарка не влияла на центрирование */
-.path-node-wrapper {
-    position: relative;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin-bottom: 24px;
-}
-
-/* Смещение узлов влево и вправо */
-.path-node-wrapper:nth-child(odd) .path-node {
-    transform: translateX(-60px);
-}
-.path-node-wrapper:nth-child(even) .path-node {
-    transform: translateX(60px);
-}
-
-.path-node {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-decoration: none;
-    color: inherit;
-    position: relative;
-    z-index: 2;
-    transition: transform 0.2s;
-}
-
-.path-node:not(.locked):hover {
-    transform: scale(1.05) !important;
-}
-
-/* Линия-соединитель между уровнями (рисуем через фон) */
-.duolingo-path::before {
-    content: '';
-    position: absolute;
-    top: 60px;
-    bottom: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 6px;
-    background: var(--border);
-    border-radius: 6px;
-    z-index: 1;
-    opacity: 0.3;
-}
-
-/* Кружки уровней */
-.node-circle {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg-elevated);
-    border: 4px solid var(--border);
-    color: var(--text-muted);
-    transition: all 0.2s;
-    box-shadow: 0 6px 0 var(--border); /* Эффект 3D */
-}
-
-.node-circle.completed {
-    background: var(--success);
-    border-color: var(--success);
-    color: white;
-    box-shadow: 0 6px 0 #15803d;
-}
-
-.node-circle.current {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: white;
-    box-shadow: 0 6px 0 var(--primary-dark);
-}
-
-.node-circle.current svg {
-    transform: translateX(3px);
-}
-
-.path-node:not(.locked):active .node-circle {
-    transform: translateY(6px);
-    box-shadow: 0 0 0 transparent;
-}
-
-/* Текст и звезды */
-.node-label {
-    font-weight: 700;
-    font-size: 15px;
-    text-align: center;
-    margin-top: 12px;
-    color: var(--text);
-    letter-spacing: -0.01em;
-    max-width: 140px;
-}
-
-.path-node.locked .node-label {
-    color: var(--text-muted);
-}
-
-.node-stars {
-    display: flex;
-    gap: 2px;
-    margin-top: 4px;
-}
-
-.star {
-    font-size: 14px;
-    color: var(--border);
-}
-
-.star.filled {
-    color: #fbbf24;
-}
-
-/* Аватарка над текущим уровнем */
-.path-avatar {
-    position: absolute;
-    top: -52px;
-    left: 50%;
-    transform: translateX(-50%);
-    animation: floatAvatar 2s ease-in-out infinite;
-    z-index: 10;
-    pointer-events: none;
-}
-
-.user-avatar-mini {
-    width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 18px;
-    border: 3px solid var(--bg);
-    box-shadow: var(--shadow-lg);
-}
-
-/* Хвостик от аватарки */
-.path-avatar::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 6px solid transparent;
-    border-right: 6px solid transparent;
-    border-top: 8px solid var(--bg);
-}
-
-@keyframes floatAvatar {
-    0%, 100% { transform: translate(-50%, 0); }
-    50% { transform: translate(-50%, -8px); }
-}
-
-/* Адаптив для мобильных */
-@media (max-width: 600px) {
-    .path-node-wrapper:nth-child(odd) .path-node { transform: translateX(-30px); }
-    .path-node-wrapper:nth-child(even) .path-node { transform: translateX(30px); }
-    
-    .node-circle { width: 68px; height: 68px; border-width: 3px; box-shadow: 0 4px 0 var(--border); }
-    .node-circle svg { width: 24px; height: 24px; }
-    .path-avatar { top: -44px; }
-    .user-avatar-mini { width: 36px; height: 36px; font-size: 16px; }
 }
