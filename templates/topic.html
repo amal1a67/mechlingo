@@ -12,59 +12,64 @@
         Назад к разделу
     </a>
 
-    <div class="topic-hero">
-        <div class="topic-hero-icon">{{ topic.icon or '📝' }}</div>
-        <h1>{{ topic.name }}</h1>
-        <p>{{ topic.description or course.name }}</p>
+    <div class="topic-hero" style="background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; text-align: center; margin-bottom: 40px;">
+        <div style="width: 64px; height: 64px; border-radius: 16px; background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 16px;">
+            {{ topic.icon or '📝' }}
+        </div>
+        <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 8px;">{{ topic.name }}</h1>
+        <p style="color: var(--text-secondary); font-size: 15px;">{{ topic.description or course.name }}</p>
     </div>
 
-    <!-- Карта-змейка -->
-    <div class="duolingo-path">
-        {% for item in levels %}
-            {% set lv = item.level %}
-            {% set is_locked = item.status == 'locked' %}
-            {% set is_completed = item.status == 'completed' %}
-            {% set is_current = item.status == 'unlocked' %}
-            
-            <!-- Обертка для позиционирования аватарки -->
-            <div class="path-node-wrapper">
-                <a href="{% if not is_locked %}/level/{{ lv.id }}{% else %}#{% endif %}" 
-                   class="path-node {% if is_locked %}locked{% endif %} 
-                             {% if loop.index is odd %}node-left{% else %}node-right{% endif %}">
+    <!-- КАРТА-ЗМЕЙКА -->
+    <div class="map-container">
+        <div class="map-path">
+            {% for item in levels %}
+                {% set lv = item.level %}
+                {% set is_locked = item.status == 'locked' %}
+                {% set is_completed = item.status == 'completed' %}
+                {% set is_current = item.status == 'unlocked' %}
+                
+                <!-- Каждый узел -->
+                <div class="map-node {% if loop.index is odd %}align-left{% else %}align-right{% endif %}">
                     
-                    <!-- Аватарка (только для текущего уровня) -->
-                    {% if is_current %}
-                    <div class="path-avatar">
-                        <div class="user-avatar-mini">{{ user.username[0]|upper }}</div>
-                    </div>
-                    {% endif %}
-
-                    <div class="node-circle 
-                                {% if is_completed %}completed{% endif %} 
-                                {% if is_current %}current{% endif %} 
-                                {% if is_locked %}locked{% endif %}">
-                        {% if is_completed %}
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                        {% elif is_locked %}
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                        {% else %}
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    <a href="{% if not is_locked %}/level/{{ lv.id }}{% else %}#{% endif %}" 
+                       class="node-link {% if is_locked %}locked{% endif %}">
+                        
+                        <!-- Аватарка (только над текущим уровнем) -->
+                        {% if is_current %}
+                        <div class="node-avatar">
+                            <div class="avatar-bubble">{{ user.username[0]|upper }}</div>
+                        </div>
                         {% endif %}
-                    </div>
 
-                    <div class="node-label">{{ lv.name }}</div>
-                    
-                    {% if is_completed and item.stars > 0 %}
-                    <div class="node-stars">
-                        {% for i in range(3) %}
-                            <span class="star {% if i < item.stars %}filled{% endif %}">★</span>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-                </a>
-            </div>
-        {% endfor %}
+                        <!-- Круг уровня -->
+                        <div class="node-circle 
+                                    {% if is_completed %}is-completed{% endif %} 
+                                    {% if is_current %}is-current{% endif %}">
+                            {% if is_completed %}
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                            {% elif is_locked %}
+                                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            {% else %}
+                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                            {% endif %}
+                        </div>
+
+                        <!-- Подпись уровня -->
+                        <div class="node-title">{{ lv.name }}</div>
+
+                        <!-- Звезды -->
+                        {% if is_completed and item.stars > 0 %}
+                        <div class="node-stars">
+                            {% for i in range(3) %}
+                                <span class="star {% if i < item.stars %}filled{% endif %}">★</span>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
     </div>
-    
 </div>
 {% endblock %}
