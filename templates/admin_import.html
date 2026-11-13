@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Импорт вопросов — MechLingo{% endblock %}
+{% set active = 'profile' %}
+
+{% block content %}
+<div class="page-container">
+    
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1>Импорт вопросов</h1>
+            <p class="page-subtitle">Загрузите CSV-файл, чтобы мгновенно наполнить базу</p>
+        </div>
+        <span style="background: var(--danger); color: white; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px;">DEV ONLY</span>
+    </div>
+
+    {% if error %}
+    <div class="alert alert-error" style="margin-bottom: 20px;">{{ error }}</div>
+    {% endif %}
+    
+    {% if success %}
+    <div class="alert" style="background: var(--success-light); color: var(--success); margin-bottom: 20px; font-weight: 600;">
+        {{ success }}
+    </div>
+    {% endif %}
+
+    <div style="max-width: 600px; background: var(--bg-elevated); border: 1px solid var(--border); padding: 32px; border-radius: var(--radius-lg);">
+        
+        <h3 style="margin-bottom: 16px;">Формат файла (разделитель ;)</h3>
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 20px; line-height: 1.6;">
+            Первая строка должна быть заголовком. Колонки:<br>
+            <b>1.</b> ID уровня (число)<br>
+            <b>2.</b> Текст вопроса<br>
+            <b>3-6.</b> Варианты ответов (А, Б, В, Г)<br>
+            <b>7.</b> Правильный ответ (должен в точности совпадать с одним из вариантов)
+        </p>
+        
+        <div style="background: var(--bg); padding: 12px; border-radius: 8px; font-family: monospace; font-size: 12px; color: var(--text-secondary); margin-bottom: 24px; overflow-x: auto;">
+Level_ID;Вопрос;Вариант1;Вариант2;Вариант3;Вариант4;Правильный ответ<br>
+1;Самая длинная кость?;Бедренная;Локтевая;Лучевая;Плечевая;Бедренная
+        </div>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Выберите CSV файл</label>
+                <input type="file" name="csv_file" accept=".csv" required style="padding: 10px; border: 1px dashed var(--primary); border-radius: 8px; width: 100%;">
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg btn-block">Загрузить вопросы</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
