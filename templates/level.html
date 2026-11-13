@@ -3,7 +3,6 @@
 {% block content %}
 <div class="level-container">
 
-    <!-- Прогресс-бар сверху -->
     <div class="level-progress">
         <div class="level-progress-bar">
             <div class="level-progress-fill" id="progressFill" style="width: 0%"></div>
@@ -11,12 +10,10 @@
         <div class="level-hearts" id="heartsDisplay"></div>
     </div>
 
-    <!-- Контент вопроса -->
     <div class="question-area" id="questionArea">
         <div class="question-loading">Загрузка...</div>
     </div>
 
-    <!-- Фидбэк внизу -->
     <div class="feedback-bar" id="feedbackBar">
         <div class="feedback-content" id="feedbackContent"></div>
         <button class="btn btn-primary btn-block" id="nextBtn" style="display: none;">Продолжить</button>
@@ -24,248 +21,197 @@
 
 </div>
 
-<!-- Безопасная передача JSON из Flask в JS -->
+<!-- Безопасный JSON -->
 <script id="questions-data" type="application/json">
     {{ questions | tojson | safe }}
 </script>
 
+{% block scripts %}
 <script>
-// Читаем данные из безопасного тега
-const QUESTIONS = JSON.parse(document.getElementById('questions-data').textContent);
-const LEVEL_ID = {{ level.id }};
+    const rawData = document.getElementById('questions-data').textContent;
+    const QUESTIONS = JSON.parse(rawData);
+    const LEVEL_ID = {{ level.id }};
 
-let currentIndex = 0;
-let correctCount = 0;
-let answered = false;
+    let currentIndex = 0;
+    let correctCount = 0;
+    let answered = false;
 
-// === УПРАВЛЕНИЕ ЖИЗНЯМИ ===
-let lives = Stats.current.hearts;
+    // Теперь Stats точно есть в window
+    let lives = Stats.current.hearts;
 
-function updateHeartsDisplay() {
-    const container = document.getElementById('heartsDisplay');
-    if (!container) return;
-    
-    let html = '';
-    for (let i = 0; i < 5; i++) {
-        if (i < lives) {
-            html += '<span style="color: #ef4444; filter: drop-shadow(0 0 2px rgba(239,68,68,0.4));">❤️</span>';
-        } else {
-            html += '<span style="color: var(--border); opacity: 0.5;">🤍</span>';
+    function updateHeartsDisplay() {
+        const container = document.getElementById('heartsDisplay');
+        if (!container) return;
+        let html = '';
+        for (let i = 0; i < 5; i++) {
+            if (i < lives) {
+                html += '<span style="color: #ef4444; filter: drop-shadow(0 0 2px rgba(239,68,68,0.4));">❤️</span>';
+            } else {
+                html += '<span style="color: var(--border); opacity: 0.5;">🤍</span>';
+            }
         }
-    }
-    container.innerHTML = html;
-}
-
-// === ОТРИСОВКА ПРОГРЕССА ===
-function updateProgress() {
-    const percent = (currentIndex / QUESTIONS.length) * 100;
-    document.getElementById('progressFill').style.width = percent + '%';
-}
-
-// === ОТРИСОВКА ВОПРОСА ===
-function renderQuestion() {
-    if (currentIndex >= QUESTIONS.length) {
-        finishLevel();
-        return;
+        container.innerHTML = html;
     }
 
-    const q = QUESTIONS[currentIndex];
-    const area = document.getElementById('questionArea');
-    answered = false;
-
-    // Перемешиваем варианты
-    const shuffled = [...q.options];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    function updateProgress() {
+        const percent = (currentIndex / QUESTIONS.length) * 100;
+        document.getElementById('progressFill').style.width = percent + '%';
     }
 
-    let html = `
-        <div class="question-header">
-            <span class="question-number">Вопрос ${currentIndex + 1} из ${QUESTIONS.length}</span>
-        </div>
-        <div class="question-text">${q.question}</div>
-        <div class="options-list">
-    `;
+    function renderQuestion() {
+        if (currentIndex >= QUESTIONS.length) {
+            finishLevel();
+            return;
+        }
 
-    shuffled.forEach((opt, i) => {
-        const letter = String.fromCharCode(65 + i);
-        html += `
-            <button class="option-btn" data-answer="${letter}" onclick="selectAnswer('${letter}', this)">
-                <span class="option-letter">${letter}</span>
-                <span class="option-text">${opt}</span>
-            </button>
+        const q = QUESTIONS[currentIndex];
+        const area = document.getElementById('questionArea');
+        answered = false;
+
+        const shuffled = [...q.options];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        let html = `
+            <div class="question-header">
+                <span class="question-number">Вопрос ${currentIndex + 1} из ${QUESTIONS.length}</span>
+            </div>
+            <div class="question-text">${q.question}</div>
+            <div class="options-list">
         `;
-    });
 
-    html += '</div>';
-    area.innerHTML = html;
-    document.getElementById('feedbackBar').classList.remove('visible');
-    document.getElementById('nextBtn').style.display = 'none';
-
-    updateProgress();
-    updateHeartsDisplay();
-}
-
-// === ОБРАБОТКА ОТВЕТА ===
-function selectAnswer(letter, btn) {
-    if (answered) return;
-    answered = true;
-
-    const q = QUESTIONS[currentIndex];
-    
-    // Берем текст выбранного варианта (а не букву) для сравнения
-    const selectedText = btn.querySelector('.option-text').textContent.trim();
-    const isCorrect = selectedText === q.correct_answer.trim();
-
-    // Отключаем все кнопки
-    document.querySelectorAll('.option-btn').forEach(b => {
-        b.disabled = true;
-        b.classList.add('disabled');
-    });
-
-    // Подсвечиваем
-    if (isCorrect) {
-        btn.classList.add('correct');
-        correctCount++;
-    } else {
-        btn.classList.add('wrong');
-        
-        // ТРАТИМ ЖИЗНЬ!
-        lives = Stats.removeHeart(); 
-        updateHeartsDisplay();
-        
-        // Находим правильную кнопку и подсвечиваем
-        document.querySelectorAll('.option-btn').forEach(b => {
-            const optText = b.querySelector('.option-text').textContent.trim();
-            if (optText === q.correct_answer.trim()) {
-                b.classList.add('correct');
-            }
+        shuffled.forEach((opt, i) => {
+            const letter = String.fromCharCode(65 + i);
+            html += `
+                <button class="option-btn" onclick="selectAnswer('${opt.replace(/'/g, "\\'")}', this)">
+                    <span class="option-letter">${letter}</span>
+                    <span class="option-text">${opt}</span>
+                </button>
+            `;
         });
-    }
 
-    // Показываем фидбэк
-    const feedback = document.getElementById('feedbackBar');
-    const content = document.getElementById('feedbackContent');
-    content.innerHTML = `
-        <div class="feedback-message ${isCorrect ? 'success' : 'error'}">
-            ${isCorrect ? '✅ Верно!' : '❌ Неверно'}
-        </div>
-        ${q.explanation ? `<div class="feedback-explanation">${q.explanation}</div>` : ''}
-    `;
-    feedback.classList.add('visible');
-    document.getElementById('nextBtn').style.display = 'block';
-
-    // Если жизни кончились
-    if (lives <= 0) {
+        html += '</div>';
+        area.innerHTML = html;
+        document.getElementById('feedbackBar').classList.remove('visible');
         document.getElementById('nextBtn').style.display = 'none';
-        setTimeout(() => {
-            showOutOfHeartsModal();
-        }, 1200);
+        updateProgress();
+        updateHeartsDisplay();
     }
-}
 
-function nextQuestion() {
-    currentIndex++;
-    renderQuestion();
-}
+    window.selectAnswer = function(selectedText, btn) {
+        if (answered) return;
+        answered = true;
 
-// === ЗАВЕРШЕНИЕ УРОВНЯ ===
-async function finishLevel() {
-    const area = document.getElementById('questionArea');
-    area.innerHTML = '<div class="question-loading">Сохранение...</div>';
+        const q = QUESTIONS[currentIndex];
+        const isCorrect = selectedText === q.correct_answer.trim();
 
-    try {
-        const response = await fetch(`/api/level/${LEVEL_ID}/complete`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                correct: correctCount,
-                total: QUESTIONS.length
-            })
+        document.querySelectorAll('.option-btn').forEach(b => {
+            b.disabled = true;
+            b.classList.add('disabled');
         });
-        const data = await response.json();
 
-        if (data.success) {
-            Stats.setXp(data.total_xp);
-            Stats.setStreak(data.streak);
-            if (data.level_up) {
-                Stats.setLevel(data.new_level);
+        if (isCorrect) {
+            btn.classList.add('correct');
+            correctCount++;
+        } else {
+            btn.classList.add('wrong');
+            if (lives > 0) {
+                lives = Stats.removeHeart(); 
+                updateHeartsDisplay();
             }
-
-            showResult(data);
+            document.querySelectorAll('.option-btn').forEach(b => {
+                const optText = b.querySelector('.option-text').textContent.trim();
+                if (optText === q.correct_answer.trim()) b.classList.add('correct');
+            });
         }
-    } catch (e) {
-        console.error(e);
-        Toast.show('error', 'Ошибка', 'Не удалось сохранить прогресс');
+
+        const feedback = document.getElementById('feedbackBar');
+        const content = document.getElementById('feedbackContent');
+        content.innerHTML = `
+            <div class="feedback-message ${isCorrect ? 'success' : 'error'}">${isCorrect ? '✅ Верно!' : '❌ Неверно'}</div>
+            ${q.explanation ? `<div class="feedback-explanation">${q.explanation}</div>` : ''}
+        `;
+        feedback.classList.add('visible');
+        document.getElementById('nextBtn').style.display = 'block';
+
+        if (lives <= 0) {
+            document.getElementById('nextBtn').style.display = 'none';
+            setTimeout(() => showOutOfHeartsModal(), 1200);
+        }
+    };
+
+    function nextQuestion() {
+        currentIndex++;
+        renderQuestion();
     }
-}
 
-// === ЭКРАН РЕЗУЛЬТАТОВ ===
-function showResult(data) {
-    const area = document.getElementById('questionArea');
-    const stars = '⭐'.repeat(data.stars) + '☆'.repeat(3 - data.stars);
+    async function finishLevel() {
+        const area = document.getElementById('questionArea');
+        area.innerHTML = '<div class="question-loading">Сохранение...</div>';
 
-    area.innerHTML = `
-        <div class="result-screen">
-            <div class="result-emoji">${data.stars >= 2 ? '🎉' : data.stars >= 1 ? '👍' : '😔'}</div>
-            <h2>${data.stars >= 2 ? 'Отлично!' : data.stars >= 1 ? 'Хорошо!' : 'Попробуй ещё!'}</h2>
-            <div class="result-stars">${stars}</div>
-            
-            <div class="result-stats">
-                <div class="result-stat">
-                    <span class="result-stat-icon">✅</span>
-                    <span>${data.correct} / ${data.total}</span>
+        try {
+            const response = await fetch(`/api/level/${LEVEL_ID}/complete`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ correct: correctCount, total: QUESTIONS.length })
+            });
+            const data = await response.json();
+            if (data.success) {
+                Stats.setXp(data.total_xp);
+                Stats.setStreak(data.streak);
+                if (data.level_up) Stats.setLevel(data.new_level);
+                showResult(data);
+            }
+        } catch (e) {
+            console.error(e);
+            area.innerHTML = `<div class="question-loading">Ошибка: ${e.message}</div>`;
+        }
+    }
+
+    function showResult(data) {
+        const area = document.getElementById('questionArea');
+        const stars = '⭐'.repeat(data.stars) + '☆'.repeat(3 - data.stars);
+
+        area.innerHTML = `
+            <div class="result-screen">
+                <div class="result-emoji">${data.stars >= 2 ? '🎉' : data.stars >= 1 ? '👍' : '😔'}</div>
+                <h2>${data.stars >= 2 ? 'Отлично!' : data.stars >= 1 ? 'Хорошо!' : 'Попробуй ещё!'}</h2>
+                <div class="result-stars">${stars}</div>
+                <div class="result-stats">
+                    <div class="result-stat"><span class="result-stat-icon">✅</span><span>${data.correct} / ${data.total}</span></div>
+                    <div class="result-stat"><span class="result-stat-icon">⚡</span><span>+${data.xp_earned} XP</span></div>
+                    <div class="result-stat"><span class="result-stat-icon">📊</span><span>${data.percent}%</span></div>
                 </div>
-                <div class="result-stat">
-                    <span class="result-stat-icon">⚡</span>
-                    <span>+${data.xp_earned} XP</span>
-                </div>
-                <div class="result-stat">
-                    <span class="result-stat-icon">📊</span>
-                    <span>${data.percent}%</span>
+                <div class="result-actions">
+                    <a href="/topic/{{ topic.id }}" class="btn btn-primary btn-lg">Продолжить</a>
+                    <a href="/level/{{ level.id }}" class="btn btn-outline btn-lg">Пройти заново</a>
                 </div>
             </div>
+        `;
+        document.getElementById('progressFill').style.width = '100%';
+        document.getElementById('feedbackBar').classList.remove('visible');
 
-            <div class="result-actions">
-                <a href="/topic/{{ topic.id }}" class="btn btn-primary btn-lg">Продолжить</a>
-                <a href="/level/{{ level.id }}" class="btn btn-outline btn-lg">Пройти заново</a>
-            </div>
-        </div>
-    `;
-    document.getElementById('progressFill').style.width = '100%';
-    document.getElementById('feedbackBar').classList.remove('visible');
-
-    if (data.xp_earned > 0) {
-        Toast.show('xp', `+${data.xp_earned} XP`, 'Опыт добавлен в копилку');
-    }
-    
-    if (data.goal_reached) {
-        setTimeout(() => {
-            Toast.show('success', 'Цель дня выполнена! ✅', `Стрик: ${data.streak} дн. 🔥`);
-        }, 800);
+        if (data.xp_earned > 0) Toast.show('xp', `+${data.xp_earned} XP`, 'Опыт добавлен в копилку');
+        if (data.goal_reached) setTimeout(() => Toast.show('success', 'Цель дня выполнена! ✅', `Стрик: ${data.streak} дн. 🔥`), 800);
+        if (data.new_achievements) {
+            data.new_achievements.forEach((ach, i) => setTimeout(() => Toast.show('level', 'Новое достижение!', ach), 1200 + i * 500));
+        }
     }
 
-    if (data.new_achievements && data.new_achievements.length > 0) {
-        data.new_achievements.forEach((ach, i) => {
-            setTimeout(() => {
-                Toast.show('level', 'Новое достижение!', ach);
-            }, 1200 + i * 500);
-        });
+    document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+
+    if (QUESTIONS && QUESTIONS.length > 0) {
+        renderQuestion();
+    } else {
+        document.getElementById('questionArea').innerHTML = '<div class="question-loading">В этом уровне пока нет вопросов.</div>';
     }
-}
-
-document.getElementById('nextBtn').addEventListener('click', nextQuestion);
-
-// Старт
-if (QUESTIONS && QUESTIONS.length > 0) {
-    renderQuestion();
-} else {
-    document.getElementById('questionArea').innerHTML = '<div class="question-loading">В этом уровне пока нет вопросов.</div>';
-}
 </script>
+{% endblock %}
 
 <style>
+/* ... стили оставляй как было, они не меняются ... */
 .level-container { max-width: 720px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 100px); display: flex; flex-direction: column; }
 .level-progress { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
 .level-progress-bar { flex: 1; height: 16px; background: var(--border); border-radius: 100px; overflow: hidden; }
