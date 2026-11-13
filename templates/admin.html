@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Админ-панель — MechLingo{% endblock %}
+{% set active = 'admin' %}
+
+{% block content %}
+<div class="page-container">
+    
+    <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1>Панель управления</h1>
+            <p class="page-subtitle">Добавление и удаление вопросов</p>
+        </div>
+        <span style="background: var(--danger); color: white; padding: 6px 12px; border-radius: 8px; font-weight: bold; font-size: 12px;">РЕЖИМ АДМИНА</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+        
+        <!-- Форма добавления -->
+        <div class="welcome-card" style="display: block;">
+            <h2 style="margin-bottom: 20px;">Добавить вопрос</h2>
+            <form method="POST" action="/admin/add_question">
+                
+                <div class="form-group">
+                    <label>Выберите уровень</label>
+                    <select name="level_id" class="form-group input" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text);">
+                        {% for l in levels %}
+                            <option value="{{ l.id }}">{{ l.course_name }} -> {{ l.topic_name }} -> {{ l.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Текст вопроса</label>
+                    <textarea name="question" required rows="3" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: inherit;"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label>Варианты ответов (через поля)</label>
+                    <input type="text" name="opt1" required placeholder="Вариант А" style="margin-bottom: 8px;">
+                    <input type="text" name="opt2" required placeholder="Вариант Б" style="margin-bottom: 8px;">
+                    <input type="text" name="opt3" placeholder="Вариант В (необязательно)">
+                    <input type="text" name="opt4" placeholder="Вариант Г (необязательно)">
+                </div>
+
+                <div class="form-group">
+                    <label>Правильный ответ (впишите в точности один из вариантов)</label>
+                    <input type="text" name="correct_answer" required placeholder="Например: Вариант А">
+                </div>
+
+                <div class="form-group">
+                    <label>Объяснение (почему это правильно)</label>
+                    <textarea name="explanation" rows="2" style="width: 100%; padding: 10px; border-radius: 8px; background: var(--bg); border: 1px solid var(--border); color: var(--text); font-family: inherit;"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Сохранить вопрос</button>
+            </form>
+        </div>
+
+        <!-- Список существующих вопросов -->
+        <div>
+            <h2 style="margin-bottom: 20px;">База вопросов ({{ questions|length }})</h2>
+            <div style="display: flex; flex-direction: column; gap: 10px; max-height: 600px; overflow-y: auto;">
+                {% for q in questions %}
+                <div class="section-card" style="cursor: default;">
+                    <div class="section-info">
+                        <div class="section-name">{{ q.question }}</div>
+                        <div class="section-desc">
+                            Уровень: {{ q.level_name }} | Ответ: <b>{{ q.correct_answer }}</b>
+                        </div>
+                    </div>
+                    <form method="POST" action="/admin/delete_question/{{ q.id }}">
+                        <button type="submit" class="logout-btn" style="color: var(--danger);" title="Удалить">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>
+                    </form>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
