@@ -37,7 +37,16 @@
                     </svg>
                     <span>Курсы</span>
                 </a>
-                <!-- НОВАЯ ВКЛАДКА РЕЙТИНГ -->
+                <!-- НОВАЯ ВКЛАДКА ПОВТОРЕНИЕ -->
+                <a href="/reviews" class="nav-item {% if active == 'reviews' %}active{% endif %}">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 4 23 10 17 10"/>
+                        <polyline points="1 20 1 14 7 14"/>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                    </svg>
+                    <span>Повторение</span>
+                </a>
+                <!-- ВКЛАДКА РЕЙТИНГ -->
                 <a href="/leaderboard" class="nav-item {% if active == 'leaderboard' %}active{% endif %}">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
@@ -49,7 +58,6 @@
                     </svg>
                     <span>Рейтинг</span>
                 </a>
-                
                 <a href="/profile" class="nav-item {% if active == 'profile' %}active{% endif %}">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
