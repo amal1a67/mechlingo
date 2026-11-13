@@ -566,11 +566,7 @@ def course_view(course_id):
             total_res = db.execute(f'SELECT COUNT(*) as c FROM course_levels WHERE topic_id IN ({placeholders})', topic_ids).fetchone()
             total_levels = total_res['c'] if total_res else 0
             
-            comp_res = db.execute(f'''
-                SELECT COUNT(*) as c FROM user_progress 
-                WHERE user_id=? AND status='completed' 
-                AND level_id IN (SELECT id FROM course_levels WHERE topic_id IN ({placeholders}))
-            ''', [user['id']] + topic_ids).fetchone()
+            comp_res = db.execute(f'SELECT COUNT(*) as c FROM user_progress WHERE user_id=? AND status="completed" AND level_id IN (SELECT id FROM course_levels WHERE topic_id IN ({placeholders}))', [user['id']] + topic_ids).fetchone()
             completed_levels = comp_res['c'] if comp_res else 0
 
         percent = int(completed_levels / total_levels * 100) if total_levels > 0 else 0
@@ -608,11 +604,7 @@ def section_view(section_id):
         total_res = db.execute('SELECT COUNT(*) as c FROM course_levels WHERE topic_id=?', [t['id']]).fetchone()
         total = total_res['c'] if total_res else 0
 
-        completed_res = db.execute('''
-            SELECT COUNT(*) as c FROM user_progress
-            WHERE user_id=? AND status='completed'
-            AND level_id IN (SELECT id FROM course_levels WHERE topic_id=?)
-        ''', [user['id'], t['id']]).fetchone()
+        completed_res = db.execute('SELECT COUNT(*) as c FROM user_progress WHERE user_id=? AND status="completed" AND level_id IN (SELECT id FROM course_levels WHERE topic_id=?)', [user['id'], t['id']]).fetchone()
         completed = completed_res['c'] if completed_res else 0
 
         percent = int(completed / total * 100) if total > 0 else 0
