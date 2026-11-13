@@ -2386,3 +2386,183 @@ svg { display: block; }
     .node-circle { width: 64px; height: 64px; border-width: 2px; }
     .node-circle svg { width: 24px; height: 24px; }
 }
+/* ==================== DUOLINGO PATH (НОВАЯ ЗМЕЙКА) ==================== */
+.duolingo-path {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 0 100px;
+    position: relative;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Обертка для каждого узла, чтобы аватарка не влияла на центрирование */
+.path-node-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+/* Смещение узлов влево и вправо */
+.path-node-wrapper:nth-child(odd) .path-node {
+    transform: translateX(-60px);
+}
+.path-node-wrapper:nth-child(even) .path-node {
+    transform: translateX(60px);
+}
+
+.path-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    z-index: 2;
+    transition: transform 0.2s;
+}
+
+.path-node:not(.locked):hover {
+    transform: scale(1.05) !important;
+}
+
+/* Линия-соединитель между уровнями (рисуем через фон) */
+.duolingo-path::before {
+    content: '';
+    position: absolute;
+    top: 60px;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 6px;
+    background: var(--border);
+    border-radius: 6px;
+    z-index: 1;
+    opacity: 0.3;
+}
+
+/* Кружки уровней */
+.node-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-elevated);
+    border: 4px solid var(--border);
+    color: var(--text-muted);
+    transition: all 0.2s;
+    box-shadow: 0 6px 0 var(--border); /* Эффект 3D */
+}
+
+.node-circle.completed {
+    background: var(--success);
+    border-color: var(--success);
+    color: white;
+    box-shadow: 0 6px 0 #15803d;
+}
+
+.node-circle.current {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 6px 0 var(--primary-dark);
+}
+
+.node-circle.current svg {
+    transform: translateX(3px);
+}
+
+.path-node:not(.locked):active .node-circle {
+    transform: translateY(6px);
+    box-shadow: 0 0 0 transparent;
+}
+
+/* Текст и звезды */
+.node-label {
+    font-weight: 700;
+    font-size: 15px;
+    text-align: center;
+    margin-top: 12px;
+    color: var(--text);
+    letter-spacing: -0.01em;
+    max-width: 140px;
+}
+
+.path-node.locked .node-label {
+    color: var(--text-muted);
+}
+
+.node-stars {
+    display: flex;
+    gap: 2px;
+    margin-top: 4px;
+}
+
+.star {
+    font-size: 14px;
+    color: var(--border);
+}
+
+.star.filled {
+    color: #fbbf24;
+}
+
+/* Аватарка над текущим уровнем */
+.path-avatar {
+    position: absolute;
+    top: -52px;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: floatAvatar 2s ease-in-out infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.user-avatar-mini {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 18px;
+    border: 3px solid var(--bg);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Хвостик от аватарки */
+.path-avatar::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid var(--bg);
+}
+
+@keyframes floatAvatar {
+    0%, 100% { transform: translate(-50%, 0); }
+    50% { transform: translate(-50%, -8px); }
+}
+
+/* Адаптив для мобильных */
+@media (max-width: 600px) {
+    .path-node-wrapper:nth-child(odd) .path-node { transform: translateX(-30px); }
+    .path-node-wrapper:nth-child(even) .path-node { transform: translateX(30px); }
+    
+    .node-circle { width: 68px; height: 68px; border-width: 3px; box-shadow: 0 4px 0 var(--border); }
+    .node-circle svg { width: 24px; height: 24px; }
+    .path-avatar { top: -44px; }
+    .user-avatar-mini { width: 36px; height: 36px; font-size: 16px; }
+}
