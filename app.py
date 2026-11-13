@@ -164,6 +164,33 @@ def check_streak_reset(user_id):
         db.commit()
 
 
+def check_weekly_reset(user_id):
+    db = get_db()
+    stats = get_user_stats(user_id)
+    if not stats:
+        return
+
+    today = datetime.date.today()
+    last_reset = stats['last_week_reset'] if 'last_week_reset' in stats.keys() else ''
+    
+    need_reset = False
+    if not last_reset:
+        need_reset = True
+    else:
+        try:
+            last_date = datetime.date.fromisoformat(last_reset)
+            # Если с последнего сброса прошло 7 и более дней
+            if (today - last_date).days >= 7:
+                need_reset = True
+        except:
+            need_reset = True
+
+    if need_reset:
+        db.execute('UPDATE user_stats SET weekly_xp=0, last_week_reset=? WHERE user_id=?', 
+                   [today.isoformat(), user_id])
+        db.commit()
+
+
 def get_daily_progress(user_id):
     db = get_db()
     stats = get_user_stats(user_id)
@@ -221,6 +248,7 @@ def get_week_activity(user_id):
 def _check_streak_on_request():
     if 'user_id' in session:
         check_streak_reset(session['user_id'])
+        check_weekly_reset(session['user_id'])
 
 
 # ==================== ПРОВЕРКА ДОСТУПА К УРОВНЮ ====================
@@ -615,193 +643,4 @@ def topic_view(topic_id):
 
 # ==================== ПРОХОЖДЕНИЕ УРОВНЯ ====================
 
-@app.route('/level/<int:level_id>')
-@login_required
-def level_view(level_id):
-    user = get_user()
-    db = get_db()
-    stats = get_user_stats(user['id'])
-    level = db.execute('SELECT * FROM course_levels WHERE id=?', [level_id]).fetchone()
-    if not level:
-        return redirect(url_for('dashboard'))
-
-    if not check_level_unlocked(user['id'], level_id):
-        return redirect(url_for('topic_view', topic_id=level['topic_id']))
-
-    questions = db.execute('SELECT * FROM level_questions WHERE level_id=? ORDER BY order_index', [level_id]).fetchall()
-
-    q_list = []
-    for q in questions:
-        try:
-            options = json.loads(q['options_json']) if q['options_json'] else []
-        except:
-            options = []
-
-        q_list.append({
-            'id': q['id'],
-            'question': q['question'],
-            'options': options,
-            'correct_answer': q['correct_answer'],
-            'explanation': q['explanation'] or '',
-            'question_type': q['question_type'],
-        })
-
-    topic = db.execute('SELECT * FROM course_topics WHERE id=?', [level['topic_id']]).fetchone()
-
-    return render_template('level.html',
-                           user=user, stats=stats, level=level, topic=topic, questions=q_list)
-
-
-@app.route('/api/level/<int:level_id>/complete', methods=['POST'])
-@login_required
-def api_complete_level(level_id):
-    user = get_user()
-    db = get_db()
-    data = request.get_json() or {}
-    correct_count = int(data.get('correct', 0))
-    total_count = int(data.get('total', 1))
-
-    if total_count == 0:
-        total_count = 1
-
-    percent = int(correct_count / total_count * 100)
-
-    if percent >= 95:
-        stars = 3
-    elif percent >= 80:
-        stars = 2
-    elif percent >= 60:
-        stars = 1
-    else:
-        stars = 0
-
-    level = db.execute('SELECT * FROM course_levels WHERE id=?', [level_id]).fetchone()
-    xp_earned = int(level['xp_reward'] * (percent / 100)) if percent >= 60 else 0
-
-    existing = db.execute('SELECT * FROM user_progress WHERE user_id=? AND level_id=?',
-                          [user['id'], level_id]).fetchone()
-
-    if existing:
-        best_stars = max(existing['stars'], stars)
-        best_score = max(existing['best_score'], percent)
-        new_status = 'completed' if best_stars >= 1 else existing['status']
-
-        db.execute('''
-            UPDATE user_progress
-            SET stars=?, best_score=?, attempts=attempts+1, status=?, updated_at=CURRENT_TIMESTAMP,
-                completed_at=CASE WHEN ?='completed' THEN CURRENT_TIMESTAMP ELSE completed_at END
-            WHERE user_id=? AND level_id=?
-        ''', [best_stars, best_score, new_status, new_status, user['id'], level_id])
-    else:
-        new_status = 'completed' if stars >= 1 else 'unlocked'
-        db.execute('''
-            INSERT INTO user_progress (user_id, level_id, status, stars, attempts, best_score, completed_at)
-            VALUES (?,?,?,?,1,?, CASE WHEN ?='completed' THEN CURRENT_TIMESTAMP ELSE NULL END)
-        ''', [user['id'], level_id, new_status, stars, percent, new_status])
-
-    stats = get_user_stats(user['id'])
-    new_xp = stats['xp'] + xp_earned
-    new_level = new_xp // 100 + 1
-    new_gems = stats['gems'] + (1 if stars >= 2 else 0)
-
-    db.execute('''
-        UPDATE user_stats
-        SET xp=?, level=?, gems=?, total_lessons=total_lessons+1, updated_at=CURRENT_TIMESTAMP
-        WHERE user_id=?
-    ''', [new_xp, new_level, new_gems, user['id']])
-
-    today = datetime.date.today().isoformat()
-    activity = db.execute(
-        'SELECT * FROM daily_activity WHERE user_id=? AND activity_date=?',
-        [user['id'], today]
-    ).fetchone()
-
-    goal = stats['daily_goal'] or 50
-    goal_reached_now = False
-
-    if activity:
-        was_reached = bool(activity['goal_reached'])
-        new_day_xp = activity['xp_earned'] + xp_earned
-        db.execute('''
-            UPDATE daily_activity
-            SET lessons_completed = lessons_completed + 1,
-                xp_earned = xp_earned + ?
-            WHERE user_id=? AND activity_date=?
-        ''', [xp_earned, user['id'], today])
-    else:
-        was_reached = False
-        new_day_xp = xp_earned
-        db.execute('''
-            INSERT INTO daily_activity (user_id, activity_date, lessons_completed, xp_earned)
-            VALUES (?,?,1,?)
-        ''', [user['id'], today, xp_earned])
-
-    if not was_reached and new_day_xp >= goal and xp_earned > 0:
-        db.execute('''
-            UPDATE daily_activity SET goal_reached=1
-            WHERE user_id=? AND activity_date=?
-        ''', [user['id'], today])
-        goal_reached_now = True
-
-    db.commit()
-
-    streak_value = stats['streak']
-    if xp_earned > 0:
-        streak_value = update_streak(user['id'])
-
-    new_achievements = check_achievements(user['id'])
-
-    return jsonify({
-        'success': True,
-        'stars': stars,
-        'xp_earned': xp_earned,
-        'percent': percent,
-        'correct': correct_count,
-        'total': total_count,
-        'total_xp': new_xp,
-        'new_level': new_level,
-        'level_up': new_level > stats['level'],
-        'streak': streak_value,
-        'goal_reached': goal_reached_now,
-        'daily': get_daily_progress(user['id']),
-        'new_achievements': new_achievements,
-    })
-
-
-# ==================== ПРОФИЛЬ ====================
-
-@app.route('/profile')
-@login_required
-def profile():
-    user = get_user()
-    db = get_db()
-    stats = get_user_stats(user['id'])
-    user_courses = db.execute('''
-        SELECT c.* FROM courses c
-        JOIN user_courses uc ON uc.course_id=c.id
-        WHERE uc.user_id=?
-    ''', [user['id']]).fetchall()
-    
-    all_achievements = db.execute('SELECT * FROM achievements ORDER BY id').fetchall()
-    earned_rows = db.execute('SELECT achievement_id FROM user_achievements WHERE user_id=?', [user['id']]).fetchall()
-    earned_ids = [r['achievement_id'] for r in earned_rows]
-
-    return render_template('profile.html', user=user, stats=stats,
-                           user_courses=user_courses,
-                           all_achievements=all_achievements,
-                           earned_ids=earned_ids)
-
-
-# ==================== API ====================
-
-@app.route('/api/stats')
-@login_required
-def api_stats():
-    user = get_user()
-    stats = get_user_stats(user['id'])
-    return jsonify(dict(stats))
-
-
-if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+@app.route('/
