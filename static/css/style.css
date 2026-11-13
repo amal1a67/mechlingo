@@ -2278,3 +2278,130 @@ svg { display: block; }
     .path-row.row-left { padding-left: 10%; }
     .path-row.row-right { padding-right: 10%; }
 }
+/* ==================== УРОВНИ (СПИСОК-КАРТОЧКИ) ==================== */
+.topic-hero {
+    background: var(--bg-elevated); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); padding: 32px; text-align: center; margin-bottom: 40px;
+}
+.topic-hero-icon {
+    width: 56px; height: 56px; border-radius: var(--radius);
+    background: var(--primary-light); color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px; font-weight: 700; margin: 0 auto 14px;
+}
+.topic-hero h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 6px; }
+.topic-hero p { color: var(--text-secondary); font-size: 14px; }
+
+.levels-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 700px;
+    margin: 0 auto;
+    padding-bottom: 60px;
+}
+
+.level-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-elevated);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+}
+
+.level-card:not(.locked):hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.level-card.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: var(--bg);
+}
+
+.level-card.current {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-glow);
+}
+
+.level-icon-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+}
+
+.level-icon-box.bg-success { background: var(--success); }
+.level-icon-box.bg-primary { background: var(--primary); }
+.level-icon-box.bg-muted { background: var(--text-muted); }
+
+.level-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.level-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.level-card.locked .level-title { color: var(--text-muted); }
+
+.level-stars {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.level-stars .star {
+    font-size: 14px;
+    color: var(--border);
+}
+
+.level-stars .star.filled {
+    color: #fbbf24;
+}
+
+.level-status {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--primary);
+}
+.level-card.locked .level-status { color: var(--text-muted); }
+
+.level-action {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.action-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary-light);
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.level-card:hover .action-arrow {
+    background: var(--primary);
+    color: white;
+}
