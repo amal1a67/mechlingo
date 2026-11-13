@@ -175,6 +175,10 @@ def init_db():
     add_column_if_missing('user_stats', 'daily_goal', 'daily_goal INTEGER DEFAULT 50')
     add_column_if_missing('daily_activity', 'goal_reached', 'goal_reached INTEGER DEFAULT 0')
     add_column_if_missing('daily_activity', 'goal_celebrated', 'goal_celebrated INTEGER DEFAULT 0')
+    
+    # ДЛЯ ЛИДЕРБОРДА
+    add_column_if_missing('user_stats', 'weekly_xp', 'weekly_xp INTEGER DEFAULT 0')
+    add_column_if_missing('user_stats', 'last_week_reset', 'last_week_reset TEXT DEFAULT ""')
 
     db.execute('UPDATE user_stats SET daily_goal=50 WHERE daily_goal IS NULL')
     db.commit()
@@ -214,29 +218,24 @@ def init_db():
         db.commit()
 
     # ==================== АВТО-ЗАПОЛНЕНИЕ ТЕСТОВЫМИ УРОВНЯМИ ====================
-    # Проверяем, есть ли вообще разделы. Если нет — создаем их для первого курса.
     has_sections = db.execute('SELECT COUNT(*) as c FROM course_sections').fetchone()[0]
     if has_sections == 0:
         course = db.execute('SELECT id FROM courses ORDER BY order_index LIMIT 1').fetchone()
         if course:
             cid = course['id']
             
-            # 1. Создаем раздел
             db.execute('INSERT INTO course_sections (course_id, name, description, icon) VALUES (?,?,?,?)',
                        [cid, 'Опорно-двигательная система', 'Кости, мышцы и суставы', '🦴'])
             section_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
             
-            # 2. Создаем тему
             db.execute('INSERT INTO course_topics (section_id, name, description, icon) VALUES (?,?,?,?)',
                        [section_id, 'Скелет человека', 'Основные кости и их функции', '🦴'])
             topic_id = db.execute('SELECT last_insert_rowid()').fetchone()[0]
             
-            # 3. Создаем 5 уровней для змейки
             for i in range(1, 6):
                 db.execute('INSERT INTO course_levels (topic_id, name, xp_reward) VALUES (?,?,?)',
                            [topic_id, f'Уровень {i}', 10])
             
-            # 4. Добавляем 2 тестовых вопроса в 1-й уровень (чтобы было что проходить)
             lvl_res = db.execute('SELECT id FROM course_levels WHERE topic_id=? ORDER BY order_index LIMIT 1', [topic_id]).fetchone()
             if lvl_res:
                 lvl_id = lvl_res['id']
