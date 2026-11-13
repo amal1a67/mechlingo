@@ -1808,7 +1808,7 @@ svg { display: block; }
     border-radius: var(--radius-lg);
     padding: 32px;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 40px;
 }
 
 .topic-hero-icon {
@@ -1840,12 +1840,11 @@ svg { display: block; }
 .path-container {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 30px;
-    padding: 40px 0 100px;
-    max-width: 600px;
-    margin: 0 auto;
+    gap: 40px;
+    padding: 20px 0 120px;
     width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
 }
 
 .path-row {
@@ -1855,12 +1854,12 @@ svg { display: block; }
 
 .path-row.row-left {
     justify-content: flex-start;
-    padding-left: 20%;
+    padding-left: 10%;
 }
 
 .path-row.row-right {
     justify-content: flex-end;
-    padding-right: 20%;
+    padding-right: 10%;
 }
 
 .path-item {
@@ -1983,11 +1982,14 @@ svg { display: block; }
 }
 
 @media (max-width: 600px) {
-    .path-row.row-left { padding-left: 15%; }
-    .path-row.row-right { padding-right: 15%; }
+    .path-container { max-width: 100%; gap: 30px; }
+    .path-row.row-left { padding-left: 10%; }
+    .path-row.row-right { padding-right: 10%; }
+    
     .path-circle { width: 72px; height: 72px; box-shadow: 0 6px 0 var(--border); }
     .path-circle.is-completed { box-shadow: 0 6px 0 #15803d; }
     .path-circle.is-current { box-shadow: 0 6px 0 var(--primary-dark); }
+    
     .path-circle svg { width: 26px; height: 26px; }
     .path-avatar { top: -46px; }
     .avatar-bubble { width: 38px; height: 38px; font-size: 16px; }
