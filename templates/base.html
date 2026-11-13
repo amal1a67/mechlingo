@@ -8,6 +8,104 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- СКРИПТЫ ЗАГРУЖАЮТСЯ В HEAD, ЧТОБЫ ОНИ БЫЛИ ДОСТУПНЫ ВСЕГДА -->
+    <script>
+        // Глобальный объект для статистики
+        window.Stats = {
+            current: {
+                xp: {{ stats.xp if stats else 0 }},
+                hearts: {{ stats.hearts if stats else 5 }},
+                streak: {{ stats.streak if stats else 0 }},
+                level: {{ stats.level if stats else 1 }}
+            },
+            _pop: function(id) {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.classList.remove('pop');
+                void el.offsetWidth;
+                el.classList.add('pop');
+            },
+            setXp: function(value) {
+                const el = document.getElementById('xp-value');
+                if (el) el.textContent = value;
+                this.current.xp = value;
+                this._pop('stat-xp');
+            },
+            setHearts: function(value) {
+                const el = document.getElementById('hearts-value');
+                if (el) el.textContent = value;
+                this.current.hearts = value;
+                this._pop('stat-hearts');
+            },
+            setStreak: function(value) {
+                const el = document.getElementById('streak-value');
+                if (el) el.textContent = value;
+                this.current.streak = value;
+                this._pop('stat-streak');
+            },
+            setLevel: function(value) {
+                const el = document.getElementById('sidebar-level');
+                if (el) el.textContent = value;
+                this.current.level = value;
+            },
+            removeHeart: function() {
+                const newVal = Math.max(0, this.current.hearts - 1);
+                this.setHearts(newVal);
+                return newVal;
+            }
+        };
+
+        // Глобальный объект для уведомлений
+        window.Toast = {
+            icons: {
+                xp: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+                success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+                error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+                streak: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 3 5 3 8a3 3 0 0 1-6 0c0-3 2-5 3-8z"/></svg>',
+                level: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+            },
+            show: function(type, title, subtitle = '', duration = 3000) {
+                const container = document.getElementById('toast-container');
+                if (!container) return;
+                const toast = document.createElement('div');
+                toast.className = `toast toast-${type}`;
+                toast.innerHTML = `<div class="toast-icon">${this.icons[type] || this.icons.xp}</div><div class="toast-body"><div class="toast-title">${title}</div>${subtitle ? `<div class="toast-subtitle">${subtitle}</div>` : ''}</div>`;
+                container.appendChild(toast);
+                setTimeout(() => { toast.classList.add('hiding'); setTimeout(() => toast.remove(), 250); }, duration);
+            }
+        };
+
+        // Функции для модалки
+        window.showOutOfHeartsModal = function() {
+            if (document.querySelector('.modal-overlay')) return;
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.innerHTML = `
+                <div class="modal-card">
+                    <div class="modal-emoji">💔</div>
+                    <h2>Жизни закончились</h2>
+                    <p>Не расстраивайтесь! Восстановите жизни за XP или подождите немного.</p>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary btn-lg btn-block" onclick="buyHeartsWithXp()">Восстановить за 50 XP</button>
+                        <button class="btn btn-outline btn-lg btn-block" onclick="this.closest('.modal-overlay').remove()">Позже</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        };
+
+        window.buyHeartsWithXp = function() {
+            if (Stats.current.xp < 50) {
+                Toast.show('error', 'Недостаточно XP', 'Нужно минимум 50 XP');
+                return;
+            }
+            Stats.setXp(Stats.current.xp - 50);
+            Stats.setHearts(5);
+            Toast.show('success', 'Жизни восстановлены!', 'Вперед к знаниям 💪');
+            document.querySelector('.modal-overlay')?.remove();
+        };
+    </script>
 </head>
 <body>
     <div class="app-layout">
@@ -125,102 +223,6 @@
 
         function toggleSidebar() {
             document.getElementById('sidebar')?.classList.toggle('open');
-        }
-
-        // ==================== TOAST ====================
-        const Toast = {
-            icons: {
-                xp: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-                success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-                error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-                streak: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 3 5 3 8a3 3 0 0 1-6 0c0-3 2-5 3-8z"/></svg>',
-                level: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
-            },
-            show(type, title, subtitle = '', duration = 3000) {
-                const container = document.getElementById('toast-container');
-                if (!container) return;
-                const toast = document.createElement('div');
-                toast.className = `toast toast-${type}`;
-                toast.innerHTML = `<div class="toast-icon">${this.icons[type] || this.icons.xp}</div><div class="toast-body"><div class="toast-title">${title}</div>${subtitle ? `<div class="toast-subtitle">${subtitle}</div>` : ''}</div>`;
-                container.appendChild(toast);
-                setTimeout(() => { toast.classList.add('hiding'); setTimeout(() => toast.remove(), 250); }, duration);
-            }
-        };
-
-        // ==================== STATS ====================
-        // ОБЪЯВЛЯЕМ ГЛОБАЛЬНО (window.Stats), чтобы level.html точно его видел
-        window.Stats = {
-            current: {
-                xp: {{ stats.xp if stats else 0 }},
-                hearts: {{ stats.hearts if stats else 5 }},
-                streak: {{ stats.streak if stats else 0 }},
-                level: {{ stats.level if stats else 1 }}
-            },
-            _pop(id) {
-                const el = document.getElementById(id);
-                if (!el) return;
-                el.classList.remove('pop');
-                void el.offsetWidth;
-                el.classList.add('pop');
-            },
-            setXp(value) {
-                const el = document.getElementById('xp-value');
-                if (el) el.textContent = value;
-                this.current.xp = value;
-                this._pop('stat-xp');
-            },
-            setHearts(value) {
-                const el = document.getElementById('hearts-value');
-                if (el) el.textContent = value;
-                this.current.hearts = value;
-                this._pop('stat-hearts');
-            },
-            setStreak(value) {
-                const el = document.getElementById('streak-value');
-                if (el) el.textContent = value;
-                this.current.streak = value;
-                this._pop('stat-streak');
-            },
-            setLevel(value) {
-                const el = document.getElementById('sidebar-level');
-                if (el) el.textContent = value;
-                this.current.level = value;
-            },
-            removeHeart() {
-                const newVal = Math.max(0, this.current.hearts - 1);
-                this.setHearts(newVal);
-                return newVal;
-            }
-        };
-
-        // ==================== MODAL ====================
-        function showOutOfHeartsModal() {
-            if (document.querySelector('.modal-overlay')) return;
-            const overlay = document.createElement('div');
-            overlay.className = 'modal-overlay';
-            overlay.innerHTML = `
-                <div class="modal-card">
-                    <div class="modal-emoji">💔</div>
-                    <h2>Жизни закончились</h2>
-                    <p>Не расстраивайтесь! Восстановите жизни за XP или подождите немного.</p>
-                    <div class="modal-actions">
-                        <button class="btn btn-primary btn-lg btn-block" onclick="buyHeartsWithXp()">Восстановить за 50 XP</button>
-                        <button class="btn btn-outline btn-lg btn-block" onclick="this.closest('.modal-overlay').remove()">Позже</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(overlay);
-        }
-
-        function buyHeartsWithXp() {
-            if (Stats.current.xp < 50) {
-                Toast.show('error', 'Недостаточно XP', 'Нужно минимум 50 XP');
-                return;
-            }
-            Stats.setXp(Stats.current.xp - 50);
-            Stats.setHearts(5);
-            Toast.show('success', 'Жизни восстановлены!', 'Вперед к знаниям 💪');
-            document.querySelector('.modal-overlay')?.remove();
         }
     </script>
     {% block scripts %}{% endblock %}
