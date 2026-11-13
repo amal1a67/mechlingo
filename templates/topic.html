@@ -18,7 +18,7 @@
         <p>{{ topic.description or course.name }}</p>
     </div>
 
-    <!-- СПИСОК УРОВНЕЙ (Карточки) -->
+    <!-- СПИСОК УРОВНЕЙ -->
     <div class="levels-list">
         {% for item in levels %}
             {% set lv = item.level %}
@@ -41,7 +41,7 @@
                     {% endif %}
                 </div>
 
-                <!-- Центральная часть: Название и Звезды -->
+                <!-- Центральная часть -->
                 <div class="level-info">
                     <div class="level-title">{{ lv.name }}</div>
                     <div class="level-stars">
@@ -57,13 +57,11 @@
                     </div>
                 </div>
 
-                <!-- Правая часть: Кнопка / стрелка -->
+                <!-- Правая часть: Тонкая стрелочка -->
                 <div class="level-action">
-                    {% if not is_locked %}
-                        <div class="action-arrow">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
-                        </div>
-                    {% endif %}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="action-arrow">
+                        <polyline points="9 18 15 12 9 6"/>
+                    </svg>
                 </div>
             </a>
         {% endfor %}
