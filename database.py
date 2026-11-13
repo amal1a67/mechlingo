@@ -179,6 +179,9 @@ def init_db():
     # ДЛЯ ЛИДЕРБОРДА
     add_column_if_missing('user_stats', 'weekly_xp', 'weekly_xp INTEGER DEFAULT 0')
     add_column_if_missing('user_stats', 'last_week_reset', 'last_week_reset TEXT DEFAULT ""')
+    
+    # ДЛЯ СИСТЕМЫ ПОВТОРЕНИЯ (SRS)
+    add_column_if_missing('user_progress', 'next_review_date', 'next_review_date TEXT DEFAULT ""')
 
     db.execute('UPDATE user_stats SET daily_goal=50 WHERE daily_goal IS NULL')
     db.commit()
