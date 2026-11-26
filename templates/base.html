@@ -1,17 +1,19 @@
+
 <!DOCTYPE html>
-<html lang="ru" data-theme="dark">
+<html lang="ru" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MechLingo{% endblock %}</title>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
-    <!-- СКРИПТЫ ЗАГРУЖАЮТСЯ В HEAD, ЧТОБЫ ОНИ БЫЛИ ДОСТУПНЫ ВСЕГДА -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+
     <script>
-        // Глобальный объект для статистики
         window.Stats = {
             current: {
                 xp: {{ stats.xp if stats else 0 }},
@@ -56,14 +58,13 @@
             }
         };
 
-        // Глобальный объект для уведомлений
         window.Toast = {
             icons: {
-                xp: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-                success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-                error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
-                streak: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 3 5 3 8a3 3 0 0 1-6 0c0-3 2-5 3-8z"/></svg>',
-                level: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
+                xp: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+                success: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+                error: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+                streak: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2c1 3 3 5 3 8a3 3 0 0 1-6 0c0-3 2-5 3-8z"/></svg>',
+                level: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>'
             },
             show: function(type, title, subtitle = '', duration = 3000) {
                 const container = document.getElementById('toast-container');
@@ -72,11 +73,13 @@
                 toast.className = `toast toast-${type}`;
                 toast.innerHTML = `<div class="toast-icon">${this.icons[type] || this.icons.xp}</div><div class="toast-body"><div class="toast-title">${title}</div>${subtitle ? `<div class="toast-subtitle">${subtitle}</div>` : ''}</div>`;
                 container.appendChild(toast);
-                setTimeout(() => { toast.classList.add('hiding'); setTimeout(() => toast.remove(), 250); }, duration);
+                setTimeout(() => {
+                    toast.classList.add('hiding');
+                    setTimeout(() => toast.remove(), 250);
+                }, duration);
             }
         };
 
-        // Функции для модалки
         window.showOutOfHeartsModal = function() {
             if (document.querySelector('.modal-overlay')) return;
             const overlay = document.createElement('div');
@@ -102,11 +105,12 @@
             }
             Stats.setXp(Stats.current.xp - 50);
             Stats.setHearts(5);
-            Toast.show('success', 'Жизни восстановлены!', 'Вперед к знаниям 💪');
+            Toast.show('success', 'Жизни восстановлены!', 'Вперед к знаниям');
             document.querySelector('.modal-overlay')?.remove();
         };
     </script>
 </head>
+
 <body>
     <div class="app-layout">
         {% if user %}
@@ -122,23 +126,18 @@
 
             <nav class="sidebar-nav">
                 <a href="/dashboard" class="nav-item {% if active == 'dashboard' %}active{% endif %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
                     <span>Главная</span>
                 </a>
                 <a href="/courses" class="nav-item {% if active == 'courses' %}active{% endif %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
                     <span>Курсы</span>
                 </a>
                 <a href="/reviews" class="nav-item {% if active == 'reviews' %}active{% endif %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                     <span>Повторение</span>
                 </a>
                 <a href="/leaderboard" class="nav-item {% if active == 'leaderboard' %}active{% endif %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
                     <span>Рейтинг</span>
                 </a>
                 <a href="/profile" class="nav-item {% if active == 'profile' %}active{% endif %}">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                     <span>Профиль</span>
                 </a>
             </nav>
@@ -151,9 +150,7 @@
                         <div class="user-level">Уровень <span id="sidebar-level">{{ stats.level if stats else 1 }}</span></div>
                     </div>
                 </div>
-                <a href="/logout" class="logout-btn" title="Выйти">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                </a>
+                <a href="/logout" class="logout-btn" title="Выйти">Выйти</a>
             </div>
         </aside>
         {% endif %}
@@ -162,27 +159,21 @@
             {% if user %}
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="mobile-menu-btn" onclick="toggleSidebar()">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-                    </button>
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
                 </div>
+
                 <div class="topbar-stats">
                     <div class="stat-pill" id="stat-streak" title="Стрик">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 3 5 3 8a3 3 0 0 1-6 0c0-3 2-5 3-8z"/></svg>
                         <span id="streak-value">{{ stats.streak if stats else 0 }}</span>
                     </div>
                     <div class="stat-pill stat-xp" id="stat-xp" title="Опыт">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                         <span id="xp-value">{{ stats.xp if stats else 0 }}</span>
                     </div>
                     <div class="stat-pill stat-hearts" id="stat-hearts" title="Жизни">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                         <span id="hearts-value">{{ stats.hearts if stats else 5 }}</span>
                     </div>
                     <button class="theme-toggle" onclick="toggleTheme()" title="Тема">
-                        <span id="theme-icon">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                        </span>
+                        <span id="theme-icon">☾</span>
                     </button>
                 </div>
             </header>
@@ -195,7 +186,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script>
-        // ==================== THEME ====================
         function toggleTheme() {
             const html = document.documentElement;
             const current = html.getAttribute('data-theme');
@@ -208,15 +198,11 @@
         function updateThemeIcon(theme) {
             const icon = document.getElementById('theme-icon');
             if (!icon) return;
-            if (theme === 'dark') {
-                icon.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>`;
-            } else {
-                icon.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>`;
-            }
+            icon.textContent = theme === 'dark' ? '☾' : '☀';
         }
 
         (function() {
-            const saved = localStorage.getItem('theme') || 'dark';
+            const saved = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', saved);
             updateThemeIcon(saved);
         })();
@@ -225,6 +211,7 @@
             document.getElementById('sidebar')?.classList.toggle('open');
         }
     </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>
