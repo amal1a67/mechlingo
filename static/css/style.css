@@ -74,7 +74,7 @@ html, body {
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: 'Onest', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
     background: var(--bg);
     color: var(--text);
     font-size: 15px;
