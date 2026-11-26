@@ -1,185 +1,459 @@
+
 {% extends "base.html" %}
-{% block title %}MechLingo — Учись медицине играя{% endblock %}
+{% block title %}MechLingo — медицина, которую помнишь{% endblock %}
+
 {% block content %}
-<div class="landing-premium">
+<div class="ml-landing">
 
-    <div class="hero-section">
-        <div class="hero-badge">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                <polyline points="22 4 12 14.01 9 11.01"/>
-            </svg>
-            Бесплатная платформа для медиков
-        </div>
-
-        <h1 class="hero-title">
-            Учись медицине <span class="gradient-text">по-новому</span>
-        </h1>
-
-        <p class="hero-subtitle">
-            Короткие уроки, умное повторение и игровая механика.
-            Анатомия, физиология и клинические кейсы — по 5 минут в день.
-        </p>
-
-        <div class="hero-actions">
-            <a href="/register" class="btn btn-hero btn-primary-glow">
-                Начать бесплатно
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                    <polyline points="12 5 19 12 12 19"/>
+    <!-- NAVIGATION -->
+    <header class="ml-nav">
+        <a href="/" class="ml-logo">
+            <span class="ml-logo-symbol">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2 2 7l10 5 10-5-10-5Z"/>
+                    <path d="m2 12 10 5 10-5"/>
+                    <path d="m2 17 10 5 10-5"/>
                 </svg>
-            </a>
-            <a href="/login" class="btn btn-hero btn-outline-soft">Войти</a>
+            </span>
+            <span>Mech<span>Lingo</span></span>
+        </a>
+
+        <nav class="ml-nav-links">
+            <a href="#method">Метод</a>
+            <a href="#subjects">Направления</a>
+            <a href="#how">Как работает</a>
+        </nav>
+
+        <div class="ml-nav-actions">
+            <button class="ml-theme-toggle" type="button"
+                    onclick="toggleTheme()" aria-label="Переключить тему">
+                <span id="theme-icon">☾</span>
+            </button>
+            <a href="/login" class="ml-login-link">Войти</a>
+            <a href="/register" class="ml-nav-cta">Начать бесплатно <span>↗</span></a>
         </div>
 
-        <div class="hero-stats">
-            <div class="hero-stat">
-                <div class="hero-stat-num">100+</div>
-                <div class="hero-stat-label">уроков</div>
-            </div>
-            <div class="hero-stat">
-                <div class="hero-stat-num">5 мин</div>
-                <div class="hero-stat-label">в день</div>
-            </div>
-            <div class="hero-stat">
-                <div class="hero-stat-num">0 ₽</div>
-                <div class="hero-stat-label">навсегда</div>
-            </div>
-        </div>
-    </div>
+        <button class="ml-mobile-menu" type="button"
+                aria-label="Открыть меню" onclick="toggleLandingMenu()">
+            <span></span><span></span>
+        </button>
+    </header>
 
-    <div class="mockup-section">
-        <div class="mockup-phone">
-            <div class="mockup-header">
-                <span class="mockup-stat">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 2c1 3 3 5 3 8a3 3 0 0 1-6 0c0-3 2-5 3-8z"/>
-                    </svg>
-                    12
-                </span>
-                <span class="mockup-stat">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-                    </svg>
-                    850
-                </span>
-                <span class="mockup-stat">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                    </svg>
-                    5
-                </span>
+    <!-- HERO -->
+    <section class="ml-hero">
+        <div class="ml-hero-copy">
+            <div class="ml-eyebrow">
+                <span class="ml-eyebrow-dot"></span>
+                ОБРАЗОВАТЕЛЬНАЯ ПЛАТФОРМА ДЛЯ МЕДИКОВ
             </div>
-            <div class="mockup-progress">
-                <div class="mockup-progress-fill" style="width: 60%"></div>
+
+            <h1>
+                Медицина —<br>
+                не зубрёжка.<br>
+                <span>Это понимание.</span>
+            </h1>
+
+            <p class="ml-hero-description">
+                Изучай анатомию, физиологию и фармакологию небольшими
+                шагами. Проходи уроки, проверяй себя и возвращайся
+                к материалу в нужный момент.
+            </p>
+
+            <div class="ml-hero-actions">
+                <a href="/register" class="ml-button-primary">
+                    Начать обучение
+                    <span>↗</span>
+                </a>
+                <a href="#method" class="ml-button-secondary">
+                    Как это устроено
+                    <span>↓</span>
+                </a>
             </div>
-            <div class="mockup-question">
-                <div class="mockup-q-text">Какой клапан разделяет левое предсердие и левый желудочек?</div>
-                <div class="mockup-options">
-                    <div class="mockup-opt">Трикуспидальный</div>
-                    <div class="mockup-opt correct">
-                        Митральный
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="20 6 9 17 4 12"/>
-                        </svg>
-                    </div>
-                    <div class="mockup-opt">Аортальный</div>
-                    <div class="mockup-opt">Пульмональный</div>
+
+            <div class="ml-hero-proof">
+                <div class="ml-proof-avatars">
+                    <span>А</span><span>М</span><span>Е</span>
+                </div>
+                <div>
+                    <strong>Учись в своём ритме</strong>
+                    <small>Короткие занятия без перегруза</small>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="features-section">
-        <div class="feature-premium">
-            <div class="feature-icon-premium">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="6" y1="12" x2="10" y2="12"/>
-                    <line x1="8" y1="10" x2="8" y2="14"/>
-                    <line x1="15" y1="13" x2="15.01" y2="13"/>
-                    <line x1="18" y1="11" x2="18.01" y2="11"/>
-                    <rect x="2" y="6" width="20" height="12" rx="2"/>
-                </svg>
-            </div>
-            <h3>Игровая механика</h3>
-            <p>Опыт, серии дней, жизни и достижения — учись как в любимой игре</p>
-        </div>
-        <div class="feature-premium">
-            <div class="feature-icon-premium">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M8 2v4M16 2v4"/>
-                    <rect x="3" y="4" width="18" height="18" rx="2"/>
-                    <path d="M3 10h18"/>
-                    <path d="M10 14l2 2 4-4"/>
-                </svg>
-            </div>
-            <h3>Медицина по-настоящему</h3>
-            <p>Анатомия, физиология, фармакология — всё для экзамена</p>
-        </div>
-        <div class="feature-premium">
-            <div class="feature-icon-premium">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"/>
-                    <polyline points="12 6 12 12 16 14"/>
-                </svg>
-            </div>
-            <h3>5 минут в день</h3>
-            <p>Короткие уроки, которые легко вписать в расписание</p>
-        </div>
-        <div class="feature-premium">
-            <div class="feature-icon-premium">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2a10 10 0 1 0 10 10H12V2z"/>
-                    <path d="M12 2a10 10 0 0 1 10 10"/>
-                </svg>
-            </div>
-            <h3>Умное повторение</h3>
-            <p>Алгоритм показывает слабые места, пока ты их не запомнишь</p>
-        </div>
-    </div>
+        <!-- INTERACTIVE STUDY PREVIEW -->
+        <div class="ml-hero-visual">
+            <div class="ml-visual-orbit ml-orbit-one"></div>
+            <div class="ml-visual-orbit ml-orbit-two"></div>
 
-    <div class="how-section">
-        <h2>Как это работает</h2>
-        <div class="how-steps">
-            <div class="how-step">
-                <div class="how-num">01</div>
-                <h4>Выбери курс</h4>
-                <p>Анатомия, физиология, фармакология</p>
+            <div class="ml-preview">
+                <div class="ml-preview-top">
+                    <div>
+                        <span class="ml-preview-caption">ДЕМОНСТРАЦИЯ УРОКА</span>
+                        <strong>Анатомия сердца</strong>
+                    </div>
+                    <span class="ml-preview-level">УРОВЕНЬ 02</span>
+                </div>
+
+                <div class="ml-preview-progress">
+                    <div class="ml-preview-progress-label">
+                        <span>Твой прогресс</span>
+                        <strong>60%</strong>
+                    </div>
+                    <div class="ml-progress-track">
+                        <span></span>
+                    </div>
+                </div>
+
+                <div class="ml-preview-question">
+                    <span class="ml-question-number">ВОПРОС 04 / 08</span>
+                    <h3>Какой клапан разделяет левое предсердие и левый желудочек?</h3>
+
+                    <div class="ml-answer-list">
+                        <button type="button" class="ml-answer"
+                                data-answer="wrong">
+                            <span class="ml-answer-letter">A</span>
+                            Трикуспидальный
+                        </button>
+                        <button type="button" class="ml-answer"
+                                data-answer="correct">
+                            <span class="ml-answer-letter">B</span>
+                            Митральный
+                            <span class="ml-answer-check">✓</span>
+                        </button>
+                        <button type="button" class="ml-answer"
+                                data-answer="wrong">
+                            <span class="ml-answer-letter">C</span>
+                            Аортальный
+                        </button>
+                        <button type="button" class="ml-answer"
+                                data-answer="wrong">
+                            <span class="ml-answer-letter">D</span>
+                            Пульмональный
+                        </button>
+                    </div>
+
+                    <div class="ml-answer-feedback" aria-live="polite">
+                        Выбери ответ, чтобы проверить себя
+                    </div>
+                </div>
+
+                <div class="ml-preview-bottom">
+                    <span><i class="ml-mini-dot"></i> Практика знаний</span>
+                    <span>+20 XP за ответ</span>
+                </div>
             </div>
-            <div class="how-step">
-                <div class="how-num">02</div>
-                <h4>Проходи уроки</h4>
-                <p>Короткие уровни по 5-10 вопросов</p>
+
+            <div class="ml-float-card ml-float-xp">
+                <span class="ml-float-icon">✦</span>
+                <span><strong>+20 XP</strong><small>Новый опыт</small></span>
             </div>
-            <div class="how-step">
-                <div class="how-num">03</div>
-                <h4>Держи серию</h4>
-                <p>Заходи каждый день — не теряй прогресс</p>
+
+            <div class="ml-float-card ml-float-streak">
+                <span class="ml-streak-icon">♨</span>
+                <span><strong>12 дней</strong><small>Твоя серия</small></span>
             </div>
-            <div class="how-step">
-                <div class="how-num">04</div>
-                <h4>Сдавай экзамен</h4>
-                <p>Клинические кейсы и открытые вопросы</p>
+
+            <div class="ml-visual-note">ЗНАНИЯ, КОТОРЫЕ ОСТАЮТСЯ</div>
+        </div>
+
+        <div class="ml-hero-bottom">
+            <span>ПРОСТОЙ ПОДХОД К СЛОЖНОЙ МЕДИЦИНЕ</span>
+            <a href="#method">ЛИСТАЙ НИЖЕ <span>↓</span></a>
+        </div>
+    </section>
+
+    <!-- METHOD / EDITORIAL -->
+    <section class="ml-method" id="method">
+        <div class="ml-section-index">
+            <span>01</span>
+            <span>НАШ ПОДХОД</span>
+        </div>
+
+        <div class="ml-method-grid">
+            <div class="ml-method-heading">
+                <h2>
+                    Меньше хаоса.<br>
+                    <span>Больше смысла.</span>
+                </h2>
+            </div>
+
+            <div class="ml-method-copy">
+                <p>
+                    Когда информации слишком много, легко потерять главное.
+                    MechLingo помогает разделить обучение на небольшие
+                    понятные этапы.
+                </p>
+                <p>
+                    Ты изучаешь материал, отвечаешь на вопросы и возвращаешься
+                    к темам, которые требуют внимания.
+                </p>
+                <a href="/register" class="ml-text-link">
+                    Попробовать бесплатно <span>↗</span>
+                </a>
             </div>
         </div>
-    </div>
 
-    <div class="cta-bottom">
-        <h2>Готов начать?</h2>
-        <p>Присоединяйся к студентам-медикам, которые учатся играя</p>
-        <a href="/register" class="btn btn-hero btn-primary-glow" style="background: white; color: var(--primary);">
-            Создать аккаунт
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <line x1="5" y1="12" x2="19" y2="12"/>
-                <polyline points="12 5 19 12 12 19"/>
-            </svg>
+        <div class="ml-method-points">
+            <article class="ml-method-point">
+                <span class="ml-point-number">01</span>
+                <div class="ml-point-icon">◷</div>
+                <h3>Небольшие занятия</h3>
+                <p>Короткие уроки, которые проще встроить в насыщенный день.</p>
+            </article>
+
+            <article class="ml-method-point">
+                <span class="ml-point-number">02</span>
+                <div class="ml-point-icon">↻</div>
+                <h3>Осмысленное повторение</h3>
+                <p>Возвращайся к пройденному и закрепляй сложные темы.</p>
+            </article>
+
+            <article class="ml-method-point">
+                <span class="ml-point-number">03</span>
+                <div class="ml-point-icon">✳</div>
+                <h3>Игровой прогресс</h3>
+                <p>Получай опыт, поддерживай серию и замечай свой рост.</p>
+            </article>
+        </div>
+    </section>
+
+    <!-- SUBJECTS -->
+    <section class="ml-subjects" id="subjects">
+        <div class="ml-section-heading">
+            <div>
+                <div class="ml-section-index">
+                    <span>02</span>
+                    <span>ЧТО ИЗУЧАТЬ</span>
+                </div>
+                <h2>От основ до<br><span>клинического мышления.</span></h2>
+            </div>
+            <p>
+                Собирай знания по направлениям и постепенно
+                расширяй свою медицинскую базу.
+            </p>
+        </div>
+
+        <div class="ml-subject-list">
+            <a href="/register" class="ml-subject-row">
+                <span class="ml-subject-num">01</span>
+                <span class="ml-subject-symbol">◈</span>
+                <span class="ml-subject-name">Анатомия</span>
+                <span class="ml-subject-description">Строение человеческого тела</span>
+                <span class="ml-subject-arrow">↗</span>
+            </a>
+
+            <a href="/register" class="ml-subject-row">
+                <span class="ml-subject-num">02</span>
+                <span class="ml-subject-symbol">⌁</span>
+                <span class="ml-subject-name">Физиология</span>
+                <span class="ml-subject-description">Как работает организм</span>
+                <span class="ml-subject-arrow">↗</span>
+            </a>
+
+            <a href="/register" class="ml-subject-row">
+                <span class="ml-subject-num">03</span>
+                <span class="ml-subject-symbol">✳</span>
+                <span class="ml-subject-name">Фармакология</span>
+                <span class="ml-subject-description">Препараты и их действие</span>
+                <span class="ml-subject-arrow">↗</span>
+            </a>
+
+            <a href="/register" class="ml-subject-row">
+                <span class="ml-subject-num">04</span>
+                <span class="ml-subject-symbol">⌘</span>
+                <span class="ml-subject-name">Клинические кейсы</span>
+                <span class="ml-subject-description">Применение знаний на практике</span>
+                <span class="ml-subject-arrow">↗</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- GAMIFICATION -->
+    <section class="ml-progress-section">
+        <div class="ml-progress-copy">
+            <div class="ml-section-index">
+                <span>03</span>
+                <span>ТВОЙ ПУТЬ</span>
+            </div>
+
+            <h2>Каждый день —<br><span>маленькая победа.</span></h2>
+
+            <p>
+                Обучение становится интереснее, когда ты видишь результат.
+                Получай XP за занятия, поддерживай серию дней и открывай
+                новые достижения.
+            </p>
+
+            <a href="/register" class="ml-button-primary">
+                Начать свой путь <span>↗</span>
+            </a>
+        </div>
+
+        <div class="ml-progress-board">
+            <div class="ml-board-top">
+                <span>ТВОЯ УЧЕБНАЯ НЕДЕЛЯ</span>
+                <span class="ml-board-status">● В ПРОЦЕССЕ</span>
+            </div>
+
+            <div class="ml-board-xp">
+                <div>
+                    <small>НАКОПЛЕНО ОПЫТА</small>
+                    <strong>850 <span>XP</span></strong>
+                </div>
+                <div class="ml-board-level">
+                    <span>УРОВЕНЬ</span>
+                    <strong>09</strong>
+                </div>
+            </div>
+
+            <div class="ml-board-divider"></div>
+
+            <div class="ml-week">
+                <div class="ml-week-day ml-day-done">
+                    <span>ПН</span><i>✓</i>
+                </div>
+                <div class="ml-week-day ml-day-done">
+                    <span>ВТ</span><i>✓</i>
+                </div>
+                <div class="ml-week-day ml-day-done">
+                    <span>СР</span><i>✓</i>
+                </div>
+                <div class="ml-week-day ml-day-current">
+                    <span>ЧТ</span><i>✦</i>
+                </div>
+                <div class="ml-week-day">
+                    <span>ПТ</span><i>·</i>
+                </div>
+                <div class="ml-week-day">
+                    <span>СБ</span><i>·</i>
+                </div>
+                <div class="ml-week-day">
+                    <span>ВС</span><i>·</i>
+                </div>
+            </div>
+
+            <div class="ml-board-achievement">
+                <span class="ml-achievement-icon">✧</span>
+                <div>
+                    <strong>Постоянство решает</strong>
+                    <small>Продолжай заниматься каждый день</small>
+                </div>
+                <span class="ml-achievement-arrow">↗</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section class="ml-how" id="how">
+        <div class="ml-section-heading ml-how-heading">
+            <div>
+                <div class="ml-section-index">
+                    <span>04</span>
+                    <span>С ЧЕГО НАЧАТЬ</span>
+                </div>
+                <h2>Путь к знаниям<br><span>без лишнего.</span></h2>
+            </div>
+            <p>Несколько простых шагов — и можно приступать к занятиям.</p>
+        </div>
+
+        <div class="ml-how-steps">
+            <article class="ml-how-step">
+                <span class="ml-how-number">01</span>
+                <div class="ml-how-line"></div>
+                <h3>Создай аккаунт</h3>
+                <p>Зарегистрируйся и подготовь пространство для обучения.</p>
+            </article>
+
+            <article class="ml-how-step">
+                <span class="ml-how-number">02</span>
+                <div class="ml-how-line"></div>
+                <h3>Выбери направления</h3>
+                <p>Определи, какие медицинские дисциплины хочешь изучать.</p>
+            </article>
+
+            <article class="ml-how-step">
+                <span class="ml-how-number">03</span>
+                <div class="ml-how-line"></div>
+                <h3>Проходи уроки</h3>
+                <p>Изучай темы, отвечай на вопросы и получай опыт.</p>
+            </article>
+
+            <article class="ml-how-step">
+                <span class="ml-how-number">04</span>
+                <div class="ml-how-line"></div>
+                <h3>Закрепляй знания</h3>
+                <p>Повторяй материал и проверяй себя на экзаменах.</p>
+            </article>
+        </div>
+    </section>
+
+    <!-- FINAL CTA -->
+    <section class="ml-final-cta">
+        <div class="ml-cta-decoration">M</div>
+        <div class="ml-cta-content">
+            <span class="ml-cta-label">ТВОЙ СЛЕДУЮЩИЙ ШАГ</span>
+            <h2>Знания начинаются<br>с <span>одного урока.</span></h2>
+            <p>Выдели несколько минут сегодня. Остальное — шаг за шагом.</p>
+            <a href="/register" class="ml-button-cta">
+                Создать аккаунт <span>↗</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="ml-footer">
+        <a href="/" class="ml-logo">
+            <span class="ml-logo-symbol">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2 2 7l10 5 10-5-10-5Z"/>
+                    <path d="m2 12 10 5 10-5"/>
+                    <path d="m2 17 10 5 10-5"/>
+                </svg>
+            </span>
+            <span>Mech<span>Lingo</span></span>
         </a>
-    </div>
 
-    <footer class="landing-footer">
-        <div>© 2026 MechLingo</div>
-        <div>Сделано для студентов-медиков</div>
+        <span class="ml-footer-note">Сделано для тех, кто изучает медицину.</span>
+        <span class="ml-footer-copy">© 2026 MechLingo</span>
     </footer>
 
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleLandingMenu() {
+        document.querySelector('.ml-nav-links')?.classList.toggle('ml-menu-open');
+    }
+
+    document.querySelectorAll('.ml-answer').forEach(function(button) {
+        button.addEventListener('click', function() {
+            const answers = document.querySelectorAll('.ml-answer');
+            const feedback = document.querySelector('.ml-answer-feedback');
+
+            answers.forEach(function(item) {
+                item.classList.remove('ml-answer-correct', 'ml-answer-wrong');
+                item.disabled = true;
+            });
+
+            if (button.dataset.answer === 'correct') {
+                button.classList.add('ml-answer-correct');
+                feedback.textContent = 'Верно! Это митральный (двустворчатый) клапан.';
+                feedback.classList.add('is-correct');
+            } else {
+                button.classList.add('ml-answer-wrong');
+                answers.forEach(function(item) {
+                    if (item.dataset.answer === 'correct') {
+                        item.classList.add('ml-answer-correct');
+                    }
+                });
+                feedback.textContent = 'Не совсем. Правильный ответ — митральный клапан.';
+                feedback.classList.remove('is-correct');
+            }
+        });
+    });
+</script>
 {% endblock %}
