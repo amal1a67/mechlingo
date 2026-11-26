@@ -1,33 +1,132 @@
+
 {% extends "base.html" %}
 {% block title %}Вход — MechLingo{% endblock %}
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <div class="auth-logo">🎓</div>
-        <h1 class="auth-title">С возвращением!</h1>
-        <p class="auth-subtitle">Продолжи учиться</p>
-
-        {% if error %}
-        <div class="alert alert-error">{{ error }}</div>
-        {% endif %}
-
-        <form method="POST" action="/login" class="auth-form">
-            <div class="form-group">
-                <label>Имя пользователя</label>
-                <input type="text" name="username" required placeholder="Твой логин" autocomplete="username">
+<section class="auth-container auth-page-login">
+    <div class="auth-layout">
+        <aside class="auth-visual" aria-label="MechLingo — пространство для знаний">
+            <div class="auth-visual-top">
+                <div class="auth-brand">
+                    <span class="auth-brand-mark">
+                        <svg viewBox="0 0 40 40" fill="none">
+                            <path d="M8 29V11L20 21L32 11V29" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M13 29V20.5L20 26L27 20.5V29" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+                        </svg>
+                    </span>
+                    <span class="auth-brand-name">MechLingo</span>
+                </div>
+                <span class="auth-visual-index">LEARNING SPACE</span>
             </div>
 
-            <div class="form-group">
-                <label>Пароль</label>
-                <input type="password" name="password" required placeholder="Твой пароль" autocomplete="current-password">
+            <div class="auth-visual-copy">
+                <span class="auth-visual-kicker"><span></span> УЧИСЬ. ПОНИМАЙ. РАСТИ.</span>
+                <h2>Знания, которые<br><span>двигают вперёд.</span></h2>
+                <p>Выстраивай собственный ритм обучения и открывай новое — шаг за шагом.</p>
             </div>
 
-            <button type="submit" class="btn btn-primary btn-block btn-lg">Войти</button>
-        </form>
+            <div class="auth-visual-art">
+                <div class="auth-art-ring auth-art-ring-one"></div>
+                <div class="auth-art-ring auth-art-ring-two"></div>
+                <div class="auth-art-core">
+                    <svg viewBox="0 0 64 64" fill="none">
+                        <path d="M12 45V19L32 35L52 19V45" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M21 45V32L32 41L43 32V45" stroke="currentColor" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+                    </svg>
+                </div>
+                <div class="auth-art-chip auth-art-chip-top">
+                    <span class="auth-art-chip-dot"></span>
+                    <span>Фокус на главном</span>
+                </div>
+                <div class="auth-art-chip auth-art-chip-bottom">
+                    <span class="auth-art-chip-symbol">↗</span>
+                    <span>Расти каждый день</span>
+                </div>
+            </div>
 
-        <div class="auth-footer">
-            Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+            <div class="auth-visual-bottom">
+                <span>ТВОЙ ПУТЬ К ЗНАНИЯМ</span>
+                <span class="auth-visual-bars"><i></i><i></i><i></i><i></i></span>
+            </div>
+        </aside>
+
+        <div class="auth-card">
+            <div class="auth-card-brand">
+                <span class="auth-brand-mark">
+                    <svg viewBox="0 0 40 40" fill="none">
+                        <path d="M8 29V11L20 21L32 11V29" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M13 29V20.5L20 26L27 20.5V29" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+                    </svg>
+                </span>
+                <span class="auth-brand-name">MechLingo</span>
+            </div>
+
+            <nav class="auth-switch" aria-label="Раздел аккаунта">
+                <a class="is-active" href="/login" aria-current="page">Вход</a>
+                <a href="/register">Регистрация</a>
+            </nav>
+
+            <div class="auth-heading">
+                <span class="auth-overline">РАДЫ ТЕБЯ ВИДЕТЬ</span>
+                <h1>С возвращением!</h1>
+                <p>Войди в аккаунт и продолжай обучение.</p>
+            </div>
+
+            {% if error %}
+            <div class="auth-alert" role="alert">
+                <span>{{ error }}</span>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="/login" class="auth-form">
+                <div class="auth-field">
+                    <label for="login-username">Имя пользователя</label>
+                    <div class="auth-input-wrap">
+                        <input id="login-username" type="text" name="username" required placeholder="Твой логин" autocomplete="username" autocapitalize="none" spellcheck="false">
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label for="login-password">Пароль</label>
+                    <div class="auth-input-wrap">
+                        <input id="login-password" type="password" name="password" required placeholder="Твой пароль" autocomplete="current-password">
+                        <button class="auth-password-toggle" type="button" data-password-toggle="login-password" aria-label="Показать пароль" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="none">
+                                <path d="M2.5 12s3.2-6 9.5-6 9.5 6 9.5 6-3.2 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" stroke-width="1.7"/>
+                                <circle cx="12" cy="12" r="2.5" stroke="currentColor" stroke-width="1.7"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit">
+                    <span>Войти</span>
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <path d="M5 12H19M12.5 5.5L19 12L12.5 18.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                <span>Впервые в MechLingo?</span>
+                <a href="/register">Создать аккаунт <span>↗</span></a>
+            </div>
         </div>
     </div>
-</div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('[data-password-toggle]').forEach((button) => {
+    const input = document.getElementById(button.dataset.passwordToggle);
+    if (!input) return;
+
+    button.addEventListener('click', () => {
+        const showPassword = input.type === 'password';
+        input.type = showPassword ? 'text' : 'password';
+        button.setAttribute('aria-pressed', String(showPassword));
+        button.setAttribute('aria-label', showPassword ? 'Скрыть пароль' : 'Показать пароль');
+    });
+});
+</script>
 {% endblock %}
