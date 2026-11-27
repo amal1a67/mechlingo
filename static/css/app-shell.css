@@ -1,0 +1,51 @@
+
+/* MechLingo authenticated application shell */
+.app-layout:has(> .sidebar) { --sidebar-width: 248px; }
+.app-layout > .sidebar { padding: 26px 16px 18px; overflow-y: auto; }
+.sidebar .sidebar-logo { gap: 12px; padding: 4px 8px; margin-bottom: 38px; }
+.sidebar .shell-logo-mark { width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(145deg,#8b5cf6,#6d28d9); color: #fff; box-shadow: 0 5px 14px rgba(109,40,217,.22); }
+.sidebar .shell-logo-mark svg { width: 23px; height: 23px; }
+.sidebar .shell-wordmark { font-size: 20px; font-weight: 800; letter-spacing: -.8px; line-height: 1.15; white-space: nowrap; }
+.shell-wordmark b { color: var(--primary); }
+.shell-wordmark small { display: block; font-size: 8px; font-weight: 600; letter-spacing: .8px; color: var(--text-secondary); margin-top: 5px; }
+.sidebar .sidebar-nav { gap: 5px; }
+.shell-nav-label { padding: 0 12px 6px; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); }
+.shell-nav-secondary { margin-top: 26px; }
+.sidebar .nav-item { position: relative; min-height: 46px; padding: 11px 12px; border-radius: 12px; font-weight: 600; gap: 12px; transition: background .18s ease, color .18s ease; }
+.sidebar .nav-item.active { background: var(--primary-light); color: var(--primary-dark); font-weight: 700; }
+[data-theme="dark"] .sidebar .nav-item.active { color: var(--primary); }
+.sidebar .nav-item.active::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 4px; background: var(--primary); }
+.sidebar .sidebar-footer { margin-top: 24px; padding: 12px 8px; background: var(--bg-hover); border: 1px solid var(--border); border-radius: 16px; }
+.sidebar .user-avatar { width: 36px; height: 36px; border-radius: 12px; background: linear-gradient(145deg,#8b5cf6,#6d28d9); }
+.sidebar .user-mini { padding: 0; }
+.sidebar .logout-btn { flex: 0 0 auto; padding: 6px; }
+.app-layout > .main-content:not(.no-sidebar) { min-width: 0; }
+.main-content > .topbar { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 18px; padding: 13px 18px; margin-bottom: 28px; box-shadow: var(--shadow-sm); gap: 12px; min-height: 72px; }
+.shell-context { display: grid; gap: 2px; min-width: 0; }
+.shell-context small { font-size: 9px; font-weight: 700; letter-spacing: .8px; color: var(--text-secondary); }
+.shell-context strong { font-size: 16px; letter-spacing: -.4px; color: var(--text); white-space: nowrap; }
+.main-content > .topbar .topbar-stats { gap: 8px; }
+.main-content > .topbar .stat-pill { border-radius: 11px; min-height: 38px; padding: 8px 11px; gap: 6px; background: var(--bg-hover); border: 1px solid transparent; font-variant-numeric: tabular-nums; }
+.main-content > .topbar .stat-pill svg { width: 17px; height: 17px; flex-shrink: 0; }
+.main-content > .topbar .shell-stat-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); }
+.main-content > .topbar .stat-pill.pop .shell-stat-label { animation: none; }
+.main-content > .topbar .theme-toggle { border-radius: 11px; font-size: 20px; flex-shrink: 0; }
+.shell-backdrop { display: none; }
+.sidebar a:focus-visible, .topbar button:focus-visible, .shell-backdrop:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
+@media (max-width: 900px) {
+  .shell-backdrop:not([hidden]) { display: block; position: fixed; inset: 0; background: rgba(15,15,20,.42); z-index: 99; }
+  .main-content > .topbar { padding: 10px 12px; min-height: 62px; }
+  .main-content > .topbar .shell-stat-label { display: none; }
+}
+@media (max-width: 540px) {
+  .main-content > .topbar { gap: 6px; padding: 9px 8px; margin-bottom: 20px; }
+  .main-content > .topbar .topbar-left { gap: 4px; }
+  .shell-context { display: none; }
+  .main-content > .topbar .topbar-stats { gap: 4px; }
+  .main-content > .topbar .stat-pill { padding: 6px; min-height: 34px; gap: 4px; }
+  .main-content > .topbar .theme-toggle { width: 32px; height: 34px; margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-layout > .sidebar, .sidebar .nav-item, .topbar .stat-pill { transition: none; }
+  .topbar .stat-pill.pop span { animation: none; }
+}
