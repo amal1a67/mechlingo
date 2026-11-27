@@ -111,6 +111,38 @@ def init_db():
             FOREIGN KEY (level_id) REFERENCES course_levels (id) ON DELETE CASCADE
         );
 
+        CREATE TABLE IF NOT EXISTS exam_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            course_id INTEGER REFERENCES courses(id) ON DELETE SET NULL,
+            mode TEXT NOT NULL DEFAULT 'exam',
+            token TEXT NOT NULL UNIQUE,
+            started_at INTEGER NOT NULL,
+            finished_at INTEGER,
+            total INTEGER NOT NULL,
+            correct INTEGER
+        );
+        CREATE TABLE IF NOT EXISTS exam_attempt_questions (
+            attempt_id INTEGER NOT NULL REFERENCES exam_attempts(id) ON DELETE CASCADE,
+            position INTEGER NOT NULL,
+            question_id INTEGER NOT NULL,
+            question TEXT NOT NULL,
+            options_json TEXT NOT NULL,
+            correct_answer TEXT NOT NULL,
+            explanation TEXT,
+            selected_answer TEXT,
+            is_correct INTEGER,
+            PRIMARY KEY(attempt_id, position)
+        );
+        CREATE INDEX IF NOT EXISTS idx_exam_attempt_user ON exam_attempts(user_id, finished_at);
+        CREATE TABLE IF NOT EXISTS exam_mistakes (
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            question_id INTEGER NOT NULL REFERENCES level_questions(id) ON DELETE CASCADE,
+            mistakes INTEGER NOT NULL DEFAULT 1,
+            resolved INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY(user_id, question_id)
+        );
+
         CREATE TABLE IF NOT EXISTS user_courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL,
