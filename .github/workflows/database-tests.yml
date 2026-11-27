@@ -1,0 +1,39 @@
+name: Database compatibility
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: smoke
+          POSTGRES_PASSWORD: local-ci-only
+          POSTGRES_DB: mechlingo_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U smoke -d mechlingo_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      SECRET_KEY: ci-only-not-for-production-000000000000000000000000000000
+      MECHLINGO_TEST_DB: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: SQLite
+        run: python -m unittest discover -s tests -p "test_db_smoke.py"
+      - name: PostgreSQL
+        env:
+          DATABASE_URL: postgresql://smoke:local-ci-only@localhost:5432/mechlingo_test
+        run: python -m unittest discover -s tests -p "test_db_smoke.py"

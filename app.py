@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, g
 from database import get_db, init_db, close_db
+from db_backend import is_postgres, begin_write, DB_ERRORS
 import hashlib, os, datetime, json
 import hmac
 import secrets
@@ -50,7 +51,7 @@ def get_user_stats(user_id):
         if not user_exists:
             return None
         
-        db.execute('INSERT INTO user_stats (user_id) VALUES (?)', [user_id])
+        db.execute('INSERT INTO user_stats (user_id) VALUES (?) ON CONFLICT(user_id) DO NOTHING', [user_id])
         db.commit()
         stats = db.execute('SELECT * FROM user_stats WHERE user_id=?', [user_id]).fetchone()
     return stats
@@ -113,11 +114,9 @@ def check_achievements(user_id):
     def grant(code):
         ach = db.execute('SELECT id, title FROM achievements WHERE code=?', [code]).fetchone()
         if ach:
-            try:
-                db.execute('INSERT INTO user_achievements (user_id, achievement_id) VALUES (?,?)', [user_id, ach['id']])
+            result = db.execute('INSERT INTO user_achievements (user_id, achievement_id) VALUES (?,?) ON CONFLICT(user_id,achievement_id) DO NOTHING', [user_id, ach['id']])
+            if result.rowcount:
                 new_achievements.append(ach['title'])
-            except:
-                pass
 
     if 'first_step' not in earned and (stats['total_lessons'] or 0) >= 1:
         grant('first_step')
@@ -366,7 +365,7 @@ def register():
         db.commit()
 
         user_id = db.execute('SELECT id FROM users WHERE username=?', [username]).fetchone()['id']
-        db.execute('INSERT INTO user_stats (user_id) VALUES (?)', [user_id])
+        db.execute('INSERT INTO user_stats (user_id) VALUES (?) ON CONFLICT(user_id) DO NOTHING', [user_id])
         db.commit()
 
         session.clear()
@@ -446,7 +445,7 @@ def onboarding_complete():
     db.execute('DELETE FROM user_courses WHERE user_id=?', [user['id']])
     for cid in course_ids:
         try:
-            db.execute('INSERT INTO user_courses (user_id, course_id) VALUES (?,?)',
+            db.execute('INSERT INTO user_courses (user_id, course_id) SELECT ?,id FROM courses WHERE id=? AND is_active=1 ON CONFLICT(user_id,course_id) DO NOTHING',
                        [user['id'], int(cid)])
         except:
             pass
@@ -469,7 +468,7 @@ def change_courses():
         db.execute('DELETE FROM user_courses WHERE user_id=?', [user['id']])
         for cid in course_ids:
             try:
-                db.execute('INSERT INTO user_courses (user_id, course_id) VALUES (?,?)',
+                db.execute('INSERT INTO user_courses (user_id, course_id) SELECT ?,id FROM courses WHERE id=? AND is_active=1 ON CONFLICT(user_id,course_id) DO NOTHING',
                            [user['id'], int(cid)])
             except:
                 pass
@@ -547,10 +546,10 @@ def add_course(course_id):
     user = get_user()
     db = get_db()
     try:
-        db.execute('INSERT INTO user_courses (user_id, course_id) VALUES (?,?)', [user['id'], course_id])
+        db.execute('INSERT INTO user_courses (user_id, course_id) SELECT ?,id FROM courses WHERE id=? AND is_active=1 ON CONFLICT(user_id,course_id) DO NOTHING', [user['id'], course_id])
         db.commit()
-    except:
-        pass
+    except DB_ERRORS:
+        db.rollback()
     return redirect(url_for('dashboard'))
 
 
@@ -589,7 +588,7 @@ def course_view(course_id):
             total_res = db.execute(f'SELECT COUNT(*) as c FROM course_levels WHERE topic_id IN ({placeholders})', topic_ids).fetchone()
             total_levels = total_res['c'] if total_res else 0
             
-            comp_res = db.execute(f'SELECT COUNT(*) as c FROM user_progress WHERE user_id=? AND status="completed" AND level_id IN (SELECT id FROM course_levels WHERE topic_id IN ({placeholders}))', [user['id']] + topic_ids).fetchone()
+            comp_res = db.execute(f'SELECT COUNT(*) as c FROM user_progress WHERE user_id=? AND status=\'completed\' AND level_id IN (SELECT id FROM course_levels WHERE topic_id IN ({placeholders}))', [user['id']] + topic_ids).fetchone()
             completed_levels = comp_res['c'] if comp_res else 0
 
         percent = int(completed_levels / total_levels * 100) if total_levels > 0 else 0
@@ -627,7 +626,7 @@ def section_view(section_id):
         total_res = db.execute('SELECT COUNT(*) as c FROM course_levels WHERE topic_id=?', [t['id']]).fetchone()
         total = total_res['c'] if total_res else 0
 
-        completed_res = db.execute('SELECT COUNT(*) as c FROM user_progress WHERE user_id=? AND status="completed" AND level_id IN (SELECT id FROM course_levels WHERE topic_id=?)', [user['id'], t['id']]).fetchone()
+        completed_res = db.execute('SELECT COUNT(*) as c FROM user_progress WHERE user_id=? AND status=\'completed\' AND level_id IN (SELECT id FROM course_levels WHERE topic_id=?)', [user['id'], t['id']]).fetchone()
         completed = completed_res['c'] if completed_res else 0
 
         percent = int(completed / total * 100) if total > 0 else 0
@@ -904,7 +903,7 @@ def import_tickets():
     db = get_db()
     if db.execute('SELECT id FROM ticket_sets WHERE title=?',[title]).fetchone():
         raise click.ClickException('Collection already exists; choose a new version title')
-    collection = db.execute('INSERT INTO ticket_sets(title,source,is_published) VALUES (?,?,0)',[title,source]).lastrowid
+    collection = db.execute('INSERT INTO ticket_sets(title,source,is_published) VALUES (?,?,0) RETURNING id',[title,source]).fetchone()[0]
     for ticket in tickets:
         db.execute('INSERT INTO oral_tickets(set_id,number,questions_json) VALUES (?,?,?)',
                    [collection,ticket['number'],json.dumps(ticket['questions'],ensure_ascii=False)])
@@ -995,7 +994,7 @@ def ticket_page(ticket_id):
         db.execute("""
             INSERT INTO ticket_ratings(user_id,ticket_id,rating) VALUES (?,?,?)
             ON CONFLICT(user_id,ticket_id) DO UPDATE SET rating=excluded.rating,
-            attempts=attempts+1,updated_at=CURRENT_TIMESTAMP
+            attempts=ticket_ratings.attempts+1,updated_at=CURRENT_TIMESTAMP
         """,[user['id'],ticket_id,rating])
         db.commit()
         return redirect(url_for('ticket_set_page',set_id=ticket['set_id']))
@@ -1079,7 +1078,7 @@ def api_exam_start():
         JOIN course_topics t ON t.id=l.topic_id
         JOIN course_sections s ON s.id=t.section_id
         JOIN courses c ON c.id=s.course_id
-        WHERE c.is_active=1 AND (? IS NULL OR c.id=?)
+        WHERE c.is_active=1 AND (CAST(? AS INTEGER) IS NULL OR c.id=?)
         AND (?='exam' OR EXISTS (SELECT 1 FROM exam_mistakes m
             WHERE m.user_id=? AND m.question_id=q.id AND m.resolved=0))
         ORDER BY RANDOM()
@@ -1099,8 +1098,8 @@ def api_exam_start():
         return jsonify({'error': 'Нет доступных вопросов'}), 404
     token = secrets.token_urlsafe(32)
     now = int(time.time())
-    attempt = db.execute('INSERT INTO exam_attempts(user_id,course_id,mode,token,started_at,total) VALUES (?,?,?,?,?,?)',
-                         [user['id'],course_id,mode,token,now,len(valid)]).lastrowid
+    attempt = db.execute('INSERT INTO exam_attempts(user_id,course_id,mode,token,started_at,total) VALUES (?,?,?,?,?,?) RETURNING id',
+                         [user['id'],course_id,mode,token,now,len(valid)]).fetchone()[0]
     for i,(q,options) in enumerate(valid):
         db.execute('INSERT INTO exam_attempt_questions(attempt_id,position,question_id,question,options_json,correct_answer,explanation) VALUES (?,?,?,?,?,?,?)',
                    [attempt,i,q['id'],q['question'],json.dumps(options,ensure_ascii=False),q['correct_answer'],q['explanation']])
@@ -1119,7 +1118,7 @@ def api_exam_finish():
     if not isinstance(payload,dict) or not isinstance(payload.get('token'),str) or not isinstance(payload.get('answers'),list):
         return jsonify({'error':'Некорректные данные'}),400
     db = get_db()
-    db.execute('BEGIN IMMEDIATE')
+    begin_write(db, 'exam_attempts')
     attempt = db.execute('SELECT * FROM exam_attempts WHERE token=? AND user_id=?',[payload['token'],user['id']]).fetchone()
     if not attempt:
         db.rollback()
@@ -1146,7 +1145,7 @@ def api_exam_finish():
                 db.execute("""
                     INSERT INTO exam_mistakes(user_id,question_id,mistakes,resolved)
                     SELECT ?,id,1,0 FROM level_questions WHERE id=?
-                    ON CONFLICT(user_id,question_id) DO UPDATE SET mistakes=mistakes+1,resolved=0
+                    ON CONFLICT(user_id,question_id) DO UPDATE SET mistakes=exam_mistakes.mistakes+1,resolved=0
                 """,[user['id'],q['question_id']])
             else:
                 db.execute('UPDATE exam_mistakes SET resolved=1 WHERE user_id=? AND question_id=?',[user['id'],q['question_id']])
@@ -1165,7 +1164,8 @@ def exam_history():
     if not has_pro(user):
         return redirect(url_for('exam_center'))
     db=get_db()
-    history=db.execute("""SELECT a.*,c.name AS course_name,datetime(a.finished_at,'unixepoch') AS date
+    date_sql = "to_char(to_timestamp(a.finished_at) AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS')" if is_postgres(db) else "datetime(a.finished_at,'unixepoch')"
+    history=db.execute(f"""SELECT a.*,c.name AS course_name,{date_sql} AS date
         FROM exam_attempts a LEFT JOIN courses c ON c.id=a.course_id
         WHERE a.user_id=? AND a.finished_at IS NOT NULL ORDER BY a.finished_at DESC LIMIT 50""",[user['id']]).fetchall()
     mistakes=db.execute("""SELECT m.*,q.question,t.name AS topic_name

@@ -5,7 +5,7 @@ import io
 import json
 import os
 import secrets
-import sqlite3
+from db_backend import DB_ERRORS, is_postgres, begin_write
 from functools import wraps
 from flask import abort, flash, redirect, render_template, request, session, url_for
 
@@ -82,7 +82,7 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
             if not secrets.compare_digest(setup_token.encode('utf-8'), supplied.encode('utf-8')):
                 error = 'Код активации неверный.'
             else:
-                db.execute('BEGIN IMMEDIATE')
+                begin_write(db, 'users')
                 result = db.execute("""
                     UPDATE users SET role='admin'
                     WHERE id=? AND username=? AND NOT EXISTS
@@ -163,7 +163,7 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
                     db.execute(f"INSERT INTO {table} ("+','.join(fields)+') VALUES ('+','.join('?' for _ in fields)+')', list(fields.values()))
                 db.commit()
                 flash('Изменения сохранены.', 'success')
-            except (ValueError, sqlite3.Error) as exc:
+            except (ValueError, *DB_ERRORS) as exc:
                 db.rollback()
                 flash(str(exc) if isinstance(exc,ValueError) else 'Не удалось сохранить запись.', 'error')
             return redirect(url_for('admin_content',kind=kind,parent=parent_id))
@@ -201,7 +201,7 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
                     db.execute('INSERT INTO level_questions(question,options_json,correct_answer,explanation,level_id) VALUES (?,?,?,?,?)',values+[level_id])
                 db.commit()
                 flash('Вопрос сохранён.','success')
-            except (ValueError,sqlite3.Error) as exc:
+            except (ValueError,*DB_ERRORS) as exc:
                 db.rollback()
                 flash(str(exc) if isinstance(exc,ValueError) else 'Ошибка сохранения.','error')
             return redirect(url_for('admin_questions',level=level_id))
@@ -241,7 +241,7 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
                     raise ValueError('Файл не содержит вопросов.')
                 db.commit()
                 flash(f'Добавлено вопросов: {count}.','success')
-            except (ValueError,UnicodeError,csv.Error,sqlite3.Error) as exc:
+            except (ValueError,UnicodeError,csv.Error,*DB_ERRORS) as exc:
                 db.rollback()
                 flash(str(exc) if isinstance(exc,ValueError) else 'Ошибка импорта. Изменения отменены.','error')
             return redirect(url_for('admin_import'))
@@ -268,7 +268,7 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
                         questions=t['questions']
                         if not isinstance(questions,list) or not questions or any(not isinstance(q,dict) or not all(isinstance(q.get(k),str) and q[k].strip() for k in ('question','answer')) for q in questions):
                             raise ValueError('У каждого билета должны быть вопросы и ответы.')
-                    collection=db.execute('INSERT INTO ticket_sets(title,source,is_published) VALUES (?,?,0)',[title,source]).lastrowid
+                    collection=db.execute('INSERT INTO ticket_sets(title,source,is_published) VALUES (?,?,0) RETURNING id',[title,source]).fetchone()[0]
                     for t in tickets:
                         db.execute('INSERT INTO oral_tickets(set_id,number,questions_json) VALUES (?,?,?)',[collection,t['number'],json.dumps(t['questions'],ensure_ascii=False)])
                 elif action in ('publish','unpublish'):
@@ -280,7 +280,7 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
                     raise ValueError('Неизвестное действие.')
                 db.commit()
                 flash('Изменения сохранены.','success')
-            except (ValueError,TypeError,KeyError,AttributeError,sqlite3.Error) as exc:
+            except (ValueError,TypeError,KeyError,AttributeError,*DB_ERRORS) as exc:
                 db.rollback()
                 flash(str(exc) if isinstance(exc,ValueError) else 'Проверь формат и уникальность названия комплекта.','error')
             return redirect(url_for('admin_tickets'))
@@ -304,5 +304,6 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
             flash('Срок доступа обновлён.' if result.rowcount else 'Пользователь не найден.','success' if result.rowcount else 'error')
             return redirect(url_for('admin_users',q=request.form.get('q','')))
         query=request.args.get('q','').strip()[:150]
-        users=db.execute('SELECT id,username,role,pro_until,created_at FROM users WHERE instr(lower(username),lower(?))>0 OR ?=\'\' ORDER BY id DESC LIMIT 100',[query,query]).fetchall()
+        search_fn = 'strpos' if is_postgres(db) else 'instr'
+        users=db.execute(f"SELECT id,username,role,pro_until,created_at FROM users WHERE {search_fn}(lower(username),lower(?))>0 OR ?='' ORDER BY id DESC LIMIT 100",[query,query]).fetchall()
         return page('users',users=[dict(u,pro=has_pro(u)) for u in users],query=query)
