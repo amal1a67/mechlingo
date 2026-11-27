@@ -857,6 +857,136 @@ def grant_pro():
     click.echo('Access through ' + expiry)
 
 
+@app.cli.command('import-tickets')
+def import_tickets():
+    """Import an author-reviewed JSON collection from a trusted console."""
+    import click
+    filename = click.prompt('JSON file', type=click.Path(exists=True, dir_okay=False))
+    try:
+        with open(filename, encoding='utf-8') as f:
+            data = json.load(f)
+        title, source, tickets = data['title'].strip(), data['source'].strip(), data['tickets']
+        if not title or not source or not isinstance(tickets,list) or not tickets:
+            raise ValueError('Title, source and tickets required')
+        numbers = set()
+        for ticket in tickets:
+            number = ticket['number']
+            if type(number) is not int or number < 1 or number in numbers:
+                raise ValueError('Ticket numbers must be unique positive integers')
+            numbers.add(number)
+            questions = ticket['questions']
+            if not isinstance(questions,list) or not questions:
+                raise ValueError('Each ticket needs questions')
+            for q in questions:
+                if not all(isinstance(q.get(k),str) and q[k].strip() for k in ('question','answer')):
+                    raise ValueError('Each question needs a question and reference answer')
+    except (ValueError, TypeError, KeyError, AttributeError, OSError) as exc:
+        raise click.ClickException(str(exc))
+    db = get_db()
+    if db.execute('SELECT id FROM ticket_sets WHERE title=?',[title]).fetchone():
+        raise click.ClickException('Collection already exists; choose a new version title')
+    collection = db.execute('INSERT INTO ticket_sets(title,source,is_published) VALUES (?,?,0)',[title,source]).lastrowid
+    for ticket in tickets:
+        db.execute('INSERT INTO oral_tickets(set_id,number,questions_json) VALUES (?,?,?)',
+                   [collection,ticket['number'],json.dumps(ticket['questions'],ensure_ascii=False)])
+    db.commit()
+    click.echo('Draft collection ID: '+str(collection))
+
+
+@app.cli.command('publish-tickets')
+def publish_tickets():
+    import click
+    collection = click.prompt('Reviewed collection ID',type=int)
+    db = get_db()
+    if not db.execute('SELECT id FROM oral_tickets WHERE set_id=? LIMIT 1',[collection]).fetchone():
+        raise click.ClickException('Collection empty or missing')
+    if not click.confirm('Publish reviewed materials to PRO users?'):
+        return
+    db.execute('UPDATE ticket_sets SET is_published=1 WHERE id=?',[collection])
+    db.commit()
+
+
+@app.route('/tickets')
+@login_required
+def ticket_sets_page():
+    user=get_user()
+    if not has_pro(user):
+        return redirect(url_for('exam_center'))
+    db=get_db()
+    sets=db.execute("""
+        SELECT s.*, COUNT(t.id) AS total, COUNT(r.ticket_id) AS studied,
+               SUM(CASE WHEN r.rating=3 THEN 1 ELSE 0 END) AS confident
+        FROM ticket_sets s JOIN oral_tickets t ON t.set_id=s.id
+        LEFT JOIN ticket_ratings r ON r.ticket_id=t.id AND r.user_id=?
+        WHERE s.is_published=1 GROUP BY s.id ORDER BY s.title
+    """,[user['id']]).fetchall()
+    return render_template('tickets.html',user=user,stats=get_user_stats(user['id']),sets=sets)
+
+
+@app.route('/tickets/set/<int:set_id>')
+@login_required
+def ticket_set_page(set_id):
+    user=get_user()
+    if not has_pro(user):
+        return redirect(url_for('exam_center'))
+    db=get_db()
+    collection=db.execute('SELECT * FROM ticket_sets WHERE id=? AND is_published=1',[set_id]).fetchone()
+    if not collection:
+        return redirect(url_for('ticket_sets_page'))
+    if request.args.get('draw') in ('random','weak'):
+        weak=request.args.get('draw')=='weak'
+        ticket=db.execute("""
+            SELECT t.id FROM oral_tickets t LEFT JOIN ticket_ratings r
+            ON r.ticket_id=t.id AND r.user_id=?
+            WHERE t.set_id=? AND (?=0 OR r.rating IS NULL OR r.rating<3)
+            ORDER BY RANDOM() LIMIT 1
+        """,[user['id'],set_id,int(weak)]).fetchone()
+        if ticket:
+            return redirect(url_for('ticket_page',ticket_id=ticket['id']))
+    tickets=db.execute("""
+        SELECT t.id,t.number,r.rating,r.attempts FROM oral_tickets t
+        LEFT JOIN ticket_ratings r ON r.ticket_id=t.id AND r.user_id=?
+        WHERE t.set_id=? ORDER BY t.number
+    """,[user['id'],set_id]).fetchall()
+    return render_template('tickets.html',user=user,stats=get_user_stats(user['id']),collection=collection,tickets=tickets)
+
+
+@app.route('/tickets/<int:ticket_id>',methods=['GET','POST'])
+@login_required
+def ticket_page(ticket_id):
+    import secrets
+    user=get_user()
+    if not has_pro(user):
+        return redirect(url_for('exam_center'))
+    db=get_db()
+    ticket=db.execute("""
+        SELECT t.*,s.title,s.source FROM oral_tickets t JOIN ticket_sets s ON s.id=t.set_id
+        WHERE t.id=? AND s.is_published=1
+    """,[ticket_id]).fetchone()
+    if not ticket:
+        return redirect(url_for('ticket_sets_page'))
+    if request.method=='POST':
+        token=session.get('ticket_csrf','')
+        supplied=request.form.get('csrf','')
+        if not token or not secrets.compare_digest(token,supplied):
+            return 'Invalid request',400
+        rating=request.form.get('rating',type=int)
+        if rating not in (1,2,3):
+            return 'Invalid rating',400
+        db.execute("""
+            INSERT INTO ticket_ratings(user_id,ticket_id,rating) VALUES (?,?,?)
+            ON CONFLICT(user_id,ticket_id) DO UPDATE SET rating=excluded.rating,
+            attempts=attempts+1,updated_at=CURRENT_TIMESTAMP
+        """,[user['id'],ticket_id,rating])
+        db.commit()
+        return redirect(url_for('ticket_set_page',set_id=ticket['set_id']))
+    if not session.get('ticket_csrf'):
+        session['ticket_csrf']=secrets.token_urlsafe(32)
+    questions=json.loads(ticket['questions_json'])
+    return render_template('tickets.html',user=user,stats=get_user_stats(user['id']),ticket=ticket,
+                           questions=questions,revealed=request.args.get('show')=='1',csrf=session['ticket_csrf'])
+
+
 @app.route('/exam-center')
 @login_required
 def exam_center():
