@@ -1,4 +1,5 @@
 @import url("tokens.css");
+@import url("components.css");
 
 /* ==================== СБРОС ==================== */
 * {
@@ -869,8 +870,6 @@ svg { display: block; }
     color: var(--text-secondary);
     font-size: 14px;
 }
-
-@import url("components.css");
 
 /* ==================== AUTH ==================== */
 .auth-container {
