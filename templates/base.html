@@ -131,6 +131,10 @@
                 <div class="shell-nav-label shell-nav-secondary">ЛИЧНОЕ</div>
                 <a href="/leaderboard" class="nav-item {% if active == 'leaderboard' %}active{% endif %}" {% if active == 'leaderboard' %}aria-current="page"{% endif %}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8v6a4 4 0 0 1-8 0V3ZM8 5H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4"/></svg><span>Рейтинг</span></a>
                 <a href="/profile" class="nav-item {% if active == 'profile' %}active{% endif %}" {% if active == 'profile' %}aria-current="page"{% endif %}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>Профиль</span></a>
+                {% if user.role == 'admin' %}
+                <div class="shell-nav-label shell-nav-secondary">УПРАВЛЕНИЕ</div>
+                <a href="{{ url_for('admin_home') }}" class="nav-item {% if active == 'admin' %}active{% endif %}"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 3 3 7v5c0 5 4 8 9 10 5-2 9-5 9-10V7l-9-4Z"/><path d="m8 12 3 3 5-6"/></svg><span>Управление платформой</span></a>
+                {% endif %}
             </nav>
 
             <div class="sidebar-footer">
