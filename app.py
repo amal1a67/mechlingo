@@ -476,7 +476,9 @@ def dashboard():
 
     user_courses = db.execute('''
         SELECT c.*, uc.started_at,
-               (SELECT COUNT(*) FROM course_sections WHERE course_id=c.id) as sections_count
+               (SELECT COUNT(*) FROM course_sections WHERE course_id=c.id) as sections_count,
+               (SELECT COUNT(*) FROM course_levels l JOIN course_topics t ON t.id=l.topic_id JOIN course_sections s ON s.id=t.section_id WHERE s.course_id=c.id) AS total_levels,
+               (SELECT COUNT(DISTINCT l.id) FROM course_levels l JOIN course_topics t ON t.id=l.topic_id JOIN course_sections s ON s.id=t.section_id JOIN user_progress p ON p.level_id=l.id WHERE s.course_id=c.id AND p.user_id=uc.user_id AND p.status='completed') AS completed_levels
         FROM courses c
         JOIN user_courses uc ON uc.course_id = c.id
         WHERE uc.user_id = ?
