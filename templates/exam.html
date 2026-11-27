@@ -10,7 +10,7 @@
         <div style="font-size: 80px; margin-bottom: 20px;">🎓</div>
         <h1 style="font-size: 32px; margin-bottom: 10px;">Пробный экзамен</h1>
         <p style="color: var(--text-secondary); margin-bottom: 30px; font-size: 16px; max-width: 500px; margin-left: auto; margin-right: auto;">
-            Вам будет предложено 20 случайных вопросов. Время на выполнение — 15 минут. 
+            Вам будет предложено до 20 случайных вопросов. Время на выполнение — 15 минут. 
             У вас не будет подсказок и жизней. Удачи!
         </p>
         <button class="btn btn-primary btn-lg" onclick="startExam()" style="padding: 16px 40px; font-size: 18px;">
@@ -47,7 +47,7 @@
     <!-- Экран результатов (скрыт) -->
     <div id="resultScreen" style="display: none; text-align: center; padding: 40px 20px;">
         <div style="font-size: 80px; margin-bottom: 20px;" id="resultEmoji">🏆</div>
-        <h1 style="font-size: 32px; margin-bottom: 10px;" id="resultTitle">Экзамен сдан!</h1>
+        <h1 style="font-size: 32px; margin-bottom: 10px;" id="resultTitle">Хороший результат!</h1>
         <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 30px;">
             Вы ответили правильно на <span id="correctCount" style="font-weight: 800; color: var(--primary);">14</span> из <span id="totalCount">20</span>
         </p>
@@ -55,7 +55,7 @@
         
         <div style="display: flex; gap: 12px; justify-content: center;">
             <a href="/exam-center" class="btn btn-primary btn-lg">К подготовке</a>
-            <button class="btn btn-outline btn-lg" onclick="location.reload()">Пройти заново</button>
+            <a id="attemptLink" class="btn btn-outline btn-lg" href="/exam-history">Разобрать ответы</a>
         </div>
     </div>
 
@@ -67,13 +67,16 @@ let answers = []; // Массив выбранных ответов (индек�
 let currentIndex = 0;
 let timeLeft = 15 * 60; // 15 минут в секундах
 let timerInterval = null;
+let attemptToken = null;
+let deadline = 0;
+let finishing = false;
 
 function startExam() {
     document.getElementById('startScreen').style.display = 'none';
     document.getElementById('examScreen').style.display = 'block';
 
     // Загружаем вопросы с сервера
-    fetch({{ url_for('api_exam_start', course_id=course_id)|tojson }})
+    fetch({{ url_for('api_exam_start', course_id=course_id, mode=mode)|tojson }}, {method:'POST'})
         .then(res => { if (!res.ok) throw new Error('Экзамен недоступен'); return res.json(); })
         .then(data => {
             if (!data.questions || data.questions.length === 0) {
@@ -83,12 +86,14 @@ function startExam() {
             }
             
             questions = data.questions;
+            attemptToken = data.token;
+            deadline = Date.now() + data.seconds * 1000;
             answers = new Array(questions.length).fill(null);
             document.getElementById('totalCount').textContent = questions.length;
             
             // Запускаем таймер
             timerInterval = setInterval(() => {
-                timeLeft--;
+                timeLeft = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
                 updateTimerDisplay();
                 if (timeLeft <= 0) {
                     finishExam();
@@ -186,24 +191,21 @@ function nextQuestion() {
     }
 }
 
-function finishExam() {
+async function finishExam() {
+    if (finishing || !attemptToken) return;
+    finishing = true;
     clearInterval(timerInterval);
-    document.getElementById('examScreen').style.display = 'none';
-
-    // Считаем результаты
-    let correct = 0;
-    questions.forEach((q, i) => {
-        if (answers[i] === q.correct_answer) {
-            correct++;
-        }
-    });
-
-    const percent = Math.round((correct / questions.length) * 100);
-    
-    document.getElementById('correctCount').textContent = correct;
-    document.getElementById('percentScore').textContent = `${percent}%`;
-    document.getElementById('resultScreen').style.display = 'block';
-
+    try {
+        const response = await fetch('/api/exam/finish', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({token:attemptToken,answers})});
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || 'Не удалось сохранить результат');
+        document.getElementById('examScreen').style.display = 'none';
+        document.getElementById('correctCount').textContent = data.correct;
+        document.getElementById('totalCount').textContent = data.total;
+        document.getElementById('percentScore').textContent = data.percent + '%';
+        document.getElementById('resultScreen').style.display = 'block';
+        document.getElementById('attemptLink').href = '/exam-history/' + data.attempt_id;
+        const percent = data.percent;
     const emoji = document.getElementById('resultEmoji');
     const title = document.getElementById('resultTitle');
 
@@ -220,6 +222,7 @@ function finishExam() {
         title.textContent = 'Нужно повторить материал';
         title.style.color = 'var(--danger)';
     }
+    } catch (e) { alert(e.message); finishing = false; }
 }
 </script>
 
