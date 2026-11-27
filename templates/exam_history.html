@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}История экзаменов — MechLingo{% endblock %}
+{% set active = 'exam' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/exam-center.css') }}">
+<div class="page-container ml-exam">
+<a class="eh-back" href="{{ url_for('exam_center') }}">← Подготовка к экзамену</a>
+{% if attempt is defined %}
+<section class="ec-hero"><div><span class="ec-tag">РАЗБОР РЕЗУЛЬТАТА</span><h1>{{ (100*attempt.correct/attempt.total)|round|int }}%</h1><p>Верных ответов: {{ attempt.correct }} из {{ attempt.total }}</p></div></section>
+<a class="btn btn-outline" href="{{ url_for('exam_history') }}">К истории</a>
+{% for q in questions %}
+<section class="ec-panel eh-answer"><span class="eh-status {{ 'eh-good' if q.is_correct else 'eh-bad' }}">{{ 'Верно' if q.is_correct else 'Неверно / пропущено' }}</span><h3>{{ loop.index }}. {{ q.question }}</h3><p>Твой ответ: {{ q.selected_answer if q.selected_answer is not none else 'Нет ответа' }}</p><p class="eh-good">Правильный ответ: {{ q.correct_answer }}</p>{% if q.explanation %}<p class="eh-explanation">{{ q.explanation }}</p>{% endif %}</section>
+{% endfor %}
+{% else %}
+<section class="ec-hero"><div><span class="ec-tag">MECHLINGO PRO</span><h1>История и работа над ошибками</h1><p>Отслеживай результаты тренировок и возвращайся к вопросам, в которых ошибался.</p></div></section>
+<section class="ec-panel"><div class="ec-heading"><h2>Последние попытки</h2><span class="ec-tag">До 50 записей</span></div>
+{% for a in history %}<a class="eh-row" href="{{ url_for('exam_attempt_detail',attempt_id=a.id) }}"><div><strong>{{ 'Работа над ошибками' if a.mode == 'mistakes' else (a.course_name or 'Общий экзамен') }}</strong><p>{{ a.date }} UTC · {{ a.correct }} / {{ a.total }}</p></div><b>{{ (100*a.correct/a.total)|round|int }}%</b><span>→</span></a>{% else %}<p>Здесь появятся результаты после первой завершённой попытки.</p>{% endfor %}
+</section>
+<section class="ec-panel"><div class="ec-heading"><h2>Банк ошибок</h2><span class="ec-tag">{{ mistakes|length }}{{ '+' if mistakes|length == 100 else '' }} вопросов</span></div><p>Вопрос исчезает из активного банка после правильного ответа на следующей тренировке или экзамене.</p>
+{% if mistakes %}<a class="btn btn-primary eh-start" href="{{ url_for('exam_setup',mode='mistakes') }}">Тренировать ошибки</a>{% for m in mistakes %}<div class="eh-row"><div><strong>{{ m.question }}</strong><p>{{ m.topic_name }}</p></div><span class="eh-bad">Ошибок: {{ m.mistakes }}</span></div>{% endfor %}{% else %}<p class="eh-explanation">Активных ошибок нет. Пройди пробный экзамен, чтобы выявить сложные вопросы.</p>{% endif %}
+</section>
+{% endif %}
+</div>
+{% endblock %}
