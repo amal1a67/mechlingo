@@ -5,29 +5,43 @@
 
     <div class="onboarding-header">
         <div class="onboarding-step-label">Шаг 1 из 2</div>
-        <h1>Привет, {{ user.username }}</h1>
-        <p>Выбери курсы, которые хочешь изучать. Можно несколько.</p>
+        <h1>Что хочешь изучать?</h1>
+        <p>Выбери один или несколько курсов — программу всегда можно изменить позже.</p>
     </div>
 
     {% if courses %}
     <div class="onboarding-courses">
         {% for c in courses %}
-        <div class="onboarding-course {% if c.id in chosen %}selected{% endif %}"
-             data-course-id="{{ c.id }}"
-             onclick="toggleCourse(this)">
-            <div class="onboarding-course-icon" style="background: {{ c.color }}15; color: {{ c.color }};">
-                {{ c.name[0] }}
-            </div>
-            <div class="onboarding-course-info">
-                <div class="onboarding-course-name">{{ c.name }}</div>
-                <div class="onboarding-course-desc">{{ c.description or 'Медицинский курс' }}</div>
-            </div>
-            <div class="onboarding-check">
+        <button type="button"
+                class="onboarding-course {% if c.id in chosen %}selected{% endif %}"
+                data-course-id="{{ c.id }}"
+                aria-pressed="{{ 'true' if c.id in chosen else 'false' }}"
+                onclick="toggleCourse(this)">
+            <span class="onboarding-course-icon" style="background: {{ c.color }}15; color: {{ c.color }};" aria-hidden="true">
+                {% if c.name == 'Анатомия' %}
+                <svg viewBox="0 0 24 24"><path d="M12 3v18M8 5c0 2 1.8 3.2 4 3.2S16 7 16 5M7 10c1.2 1 2.9 1.5 5 1.5s3.8-.5 5-1.5M7 15c1.2-1 2.9-1.5 5-1.5s3.8.5 5 1.5M9 20c0-1.7 1.3-3 3-3s3 1.3 3 3"/></svg>
+                {% elif c.name == 'Физиология' %}
+                <svg viewBox="0 0 24 24"><path d="M3 12h4l2-5 4 10 2-5h6"/></svg>
+                {% elif c.name == 'Фармакология' %}
+                <svg viewBox="0 0 24 24"><path d="m8.5 15.5 7-7a3.5 3.5 0 0 1 5 5l-7 7a3.5 3.5 0 0 1-5-5Z"/><path d="m12 12 5 5"/></svg>
+                {% elif c.name == 'Гистология' %}
+                <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="15" r="3"/><path d="M14 6h5v5M5 14v5h5"/></svg>
+                {% elif c.name == 'Биохимия' %}
+                <svg viewBox="0 0 24 24"><path d="M9 3v6l-5 9a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3l-5-9V3"/><path d="M8 14h8M8 3h8"/></svg>
+                {% else %}
+                <span>{{ c.name[0] }}</span>
+                {% endif %}
+            </span>
+            <span class="onboarding-course-info">
+                <span class="onboarding-course-name">{{ c.name }}</span>
+                <span class="onboarding-course-desc">{{ c.description or 'Медицинский курс' }}</span>
+            </span>
+            <span class="onboarding-check" aria-hidden="true">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                     <polyline points="20 6 9 17 4 12"/>
                 </svg>
-            </div>
-        </div>
+            </span>
+        </button>
         {% endfor %}
     </div>
     {% else %}
@@ -39,10 +53,10 @@
 
     <div class="onboarding-footer">
         <div class="onboarding-count">
-            Выбрано: <span id="countDisplay">{{ chosen|length }}</span>
+            Выбрано курсов: <span id="countDisplay">{{ chosen|length }}</span>
         </div>
         <button class="btn btn-primary btn-lg" onclick="completeOnboarding()" id="continueBtn">
-            Продолжить
+            <span class="continue-label">Продолжить</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"/>
                 <polyline points="12 5 19 12 12 19"/>
@@ -55,6 +69,7 @@
 <script>
 function toggleCourse(el) {
     el.classList.toggle('selected');
+    el.setAttribute('aria-pressed', el.classList.contains('selected') ? 'true' : 'false');
     updateCount();
 }
 
@@ -72,7 +87,7 @@ async function completeOnboarding() {
 
     const btn = document.getElementById('continueBtn');
     btn.disabled = true;
-    btn.textContent = 'Сохраняем...';
+    btn.querySelector('.continue-label').textContent = 'Сохраняем...';
 
     try {
         const res = await fetch('/api/onboarding/complete', {
@@ -86,12 +101,12 @@ async function completeOnboarding() {
         } else {
             alert(data.error || 'Ошибка');
             btn.disabled = false;
-            btn.textContent = 'Продолжить';
+            btn.querySelector('.continue-label').textContent = 'Продолжить';
         }
     } catch (e) {
         alert('Ошибка соединения');
         btn.disabled = false;
-        btn.textContent = 'Продолжить';
+        btn.querySelector('.continue-label').textContent = 'Продолжить';
     }
 }
 
