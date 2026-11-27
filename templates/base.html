@@ -14,6 +14,8 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
 
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/app-shell.css') }}">
+
     <script>
         window.Stats = {
             current: {
@@ -117,30 +119,17 @@
         {% if user %}
         <aside class="sidebar" id="sidebar">
             <a href="/dashboard" class="sidebar-logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5"/>
-                    <path d="M2 12l10 5 10-5"/>
-                </svg>
-                <span>MechLingo</span>
+                <span class="shell-logo-mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5"/><path d="m2 17 10 5 10-5"/></svg></span>
+                <span class="shell-wordmark">Mech<b>Lingo</b><small>МЕДИЦИНА. ОБУЧЕНИЕ.</small></span>
             </a>
-
-            <nav class="sidebar-nav">
-                <a href="/dashboard" class="nav-item {% if active == 'dashboard' %}active{% endif %}">
-                    <span>Главная</span>
-                </a>
-                <a href="/courses" class="nav-item {% if active == 'courses' %}active{% endif %}">
-                    <span>Курсы</span>
-                </a>
-                <a href="/reviews" class="nav-item {% if active == 'reviews' %}active{% endif %}">
-                    <span>Повторение</span>
-                </a>
-                <a href="/leaderboard" class="nav-item {% if active == 'leaderboard' %}active{% endif %}">
-                    <span>Рейтинг</span>
-                </a>
-                <a href="/profile" class="nav-item {% if active == 'profile' %}active{% endif %}">
-                    <span>Профиль</span>
-                </a>
+            <nav class="sidebar-nav" aria-label="Основная навигация">
+                <div class="shell-nav-label">ОБУЧЕНИЕ</div>
+                <a href="/dashboard" class="nav-item {% if active == 'dashboard' %}active{% endif %}" {% if active == 'dashboard' %}aria-current="page"{% endif %}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>Главная</span></a>
+                <a href="/courses" class="nav-item {% if active == 'courses' %}active{% endif %}" {% if active == 'courses' %}aria-current="page"{% endif %}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7c-3-3-6-3-9-2v14c3-1 6-1 9 2 3-3 6-3 9-2V5c-3-1-6-1-9 2v14"/></svg><span>Мои курсы</span></a>
+                <a href="/reviews" class="nav-item {% if active == 'reviews' %}active{% endif %}" {% if active == 'reviews' %}aria-current="page"{% endif %}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6 8a7 7 0 0 1 12-2l2 6M4 12l2 6a7 7 0 0 0 12-2"/></svg><span>Повторение</span></a>
+                <div class="shell-nav-label shell-nav-secondary">ЛИЧНОЕ</div>
+                <a href="/leaderboard" class="nav-item {% if active == 'leaderboard' %}active{% endif %}" {% if active == 'leaderboard' %}aria-current="page"{% endif %}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8v6a4 4 0 0 1-8 0V3ZM8 5H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4"/></svg><span>Рейтинг</span></a>
+                <a href="/profile" class="nav-item {% if active == 'profile' %}active{% endif %}" {% if active == 'profile' %}aria-current="page"{% endif %}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>Профиль</span></a>
             </nav>
 
             <div class="sidebar-footer">
@@ -151,29 +140,30 @@
                         <div class="user-level">Уровень <span id="sidebar-level">{{ stats.level if stats else 1 }}</span></div>
                     </div>
                 </div>
-                <a href="/logout" class="logout-btn" title="Выйти">Выйти</a>
+                <a href="/logout" class="logout-btn" title="Выйти" aria-label="Выйти"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3m10-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg></a>
             </div>
         </aside>
+        <button type="button" class="shell-backdrop" id="shell-backdrop" onclick="toggleSidebar(false)" aria-label="Закрыть меню" hidden></button>
         {% endif %}
 
         <main class="main-content {% if not user %}no-sidebar{% endif %}">
             {% if user %}
             <header class="topbar">
                 <div class="topbar-left">
-                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <button type="button" class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Открыть меню" aria-controls="sidebar" aria-expanded="false"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><div class="shell-context"><small>ПРОСТРАНСТВО ОБУЧЕНИЯ</small><strong>Твой MechLingo</strong></div>
                 </div>
 
                 <div class="topbar-stats">
                     <div class="stat-pill" id="stat-streak" title="Стрик">
-                        <span id="streak-value">{{ stats.streak if stats else 0 }}</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 5 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 3 2 4 3 4 2-3 1-6 0-10Z"/></svg><span class="shell-stat-label">Серия</span><span id="streak-value">{{ stats.streak if stats else 0 }}</span>
                     </div>
                     <div class="stat-pill stat-xp" id="stat-xp" title="Опыт">
-                        <span id="xp-value">{{ stats.xp if stats else 0 }}</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-12h-7l1-8Z"/></svg><span class="shell-stat-label">XP</span><span id="xp-value">{{ stats.xp if stats else 0 }}</span>
                     </div>
                     <div class="stat-pill stat-hearts" id="stat-hearts" title="Жизни">
-                        <span id="hearts-value">{{ stats.hearts if stats else 5 }}</span>
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 8.5c0 4.1-8.8 10-8.8 10s-8.8-5.9-8.8-10a4.6 4.6 0 0 1 8.8-2 4.6 4.6 0 0 1 8.8 2Z"/></svg><span class="shell-stat-label">Жизни</span><span id="hearts-value">{{ stats.hearts if stats else 5 }}</span>
                     </div>
-                    <button class="theme-toggle" onclick="toggleTheme()" title="Тема">
+                    <button class="theme-toggle" onclick="toggleTheme()" title="Тема" aria-label="Переключить тему">
                         <span id="theme-icon">☾</span>
                     </button>
                 </div>
@@ -199,7 +189,7 @@
         function updateThemeIcon(theme) {
             const icon = document.getElementById('theme-icon');
             if (!icon) return;
-            icon.textContent = theme === 'dark' ? '☾' : '☀';
+            icon.textContent = theme === 'dark' ? '☀' : '☾';
         }
 
         (function() {
@@ -208,9 +198,21 @@
             updateThemeIcon(saved);
         })();
 
-        function toggleSidebar() {
-            document.getElementById('sidebar')?.classList.toggle('open');
+        function toggleSidebar(force) {
+            const sidebar = document.getElementById('sidebar');
+            if (!sidebar) return;
+            const open = typeof force === 'boolean' ? force : !sidebar.classList.contains('open');
+            sidebar.classList.toggle('open', open);
+            document.querySelector('.mobile-menu-btn')?.setAttribute('aria-expanded', String(open));
+            const backdrop = document.getElementById('shell-backdrop');
+            if (backdrop) backdrop.hidden = !open;
         }
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape') toggleSidebar(false);
+        });
+        window.matchMedia('(min-width: 901px)').addEventListener('change', event => {
+            if (event.matches) toggleSidebar(false);
+        });
     </script>
 
     {% block scripts %}{% endblock %}
