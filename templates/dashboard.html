@@ -1,16 +1,22 @@
 {% extends "base.html" %}
 {% block title %}Главная — MechLingo{% endblock %}
 {% set active = 'dashboard' %}
+{% macro subject_icon(name) %}
+{% set n = name|lower %}
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+{% if 'анатом' in n %}<path d="M12 21S3 15 3 8a5 5 0 0 1 9-3 5 5 0 0 1 9 3c0 7-9 13-9 13Z"/><path d="M3 11h5l2-4 3 8 2-4h6"/>{% elif 'физиолог' in n %}<path d="M2 12h5l3-8 4 16 3-8h5"/>{% elif 'фармаколог' in n %}<path d="M5 19a5 5 0 0 1 0-7L12 5a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7 0Z"/><path d="m8 9 7 7"/>{% elif 'гистолог' in n %}<path d="m10 3 4 2-4 8-4-2 4-8ZM12 13a5 5 0 0 1 5 5M4 21h16M8 18h9M6 14h5"/>{% elif 'биохим' in n %}<circle cx="12" cy="5" r="3"/><circle cx="5" cy="17" r="3"/><circle cx="19" cy="17" r="3"/><path d="m10 8-4 6m8-6 4 6M8 17h8"/>{% else %}<path d="M12 7c-3-3-6-3-9-2v14c3-1 6-1 9 2 3-3 6-3 9-2V5c-3-1-6-1-9 2v14"/>{% endif %}
+</svg>{% endmacro %}
+{% macro subject_kind(name) %}{% set n = name|lower %}{% if 'анатом' in n %}anatomy{% elif 'физиолог' in n %}physiology{% elif 'фармаколог' in n %}pharma{% elif 'гистолог' in n %}histology{% elif 'биохим' in n %}biochem{% else %}general{% endif %}{% endmacro %}
 {% block content %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
 <div class="page-container ml-dashboard">
     <section class="md-intro">
-        <div><div class="md-kicker">ТВОЁ ОБУЧЕНИЕ</div><h1>Привет, {{ user.username }}!</h1><p>Маленькие шаги сегодня — уверенные знания завтра.</p></div>
+        <div><div class="md-kicker">ТВОЁ ОБУЧЕНИЕ</div><h1>{% if '@' in user.username %}С возвращением!{% else %}Привет, {{ user.username }}!{% endif %}</h1><p>Маленькие шаги сегодня — уверенные знания завтра.</p></div>
         <a class="md-link" href="/profile">Мой прогресс <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
     </section>
     <div class="md-overview">
         <section class="md-hero">
-            <div class="md-hero-decoration" aria-hidden="true"></div>
+            <div class="md-hero-decoration" aria-hidden="true"><svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="100" cy="100" r="87" stroke-dasharray="2 7" opacity=".5"/><circle cx="100" cy="100" r="69" opacity=".35"/><path d="M100 149S43 116 43 76a30 30 0 0 1 57-12 30 30 0 0 1 57 12c0 40-57 73-57 73Z" fill="currentColor" fill-opacity=".09"/><path d="M45 99h32l13-27 19 53 12-26h34" stroke-width="3"/><path d="M100 8v12m0 160v12M8 100h12m160 0h12" opacity=".65"/></svg></div>
             <div class="md-kicker">СЛЕДУЮЩИЙ ШАГ</div>
             {% if user_courses %}
             {% set next = user_courses[0] %}
@@ -40,10 +46,12 @@
             </div>
         </div>
 
+        <div class="md-goal-summary"><strong>{{ daily.percent if daily else 0 }}%</strong><span>дневной цели выполнено</span></div>
         <div class="daily-goal-progress">
             <div class="daily-goal-fill" id="daily-fill" style="width: {{ daily.percent if daily else 0 }}%"></div>
         </div>
 
+        <div class="md-week-caption">Активность за 7 дней</div>
         <div class="daily-week" id="daily-week">
             {% if daily and daily.week %}
                 {% for day in daily.week %}
@@ -83,8 +91,8 @@
         {% for c in user_courses %}
             {% set percent = (c.completed_levels * 100 / c.total_levels)|int if c.total_levels else 0 %}
             <a class="md-course" href="/course/{{ c.id }}">
-                <div class="md-course-top"><span class="md-course-icon" style="--course-color: {{ c.color }}">{{ book }}</span><span class="md-course-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></div>
-                <h3>{{ c.name }}</h3><p>{{ c.sections_count }} разделов · {{ c.total_levels }} уроков</p>
+                <div class="md-course-top"><span class="md-course-icon md-subject-{{ subject_kind(c.name) }}">{{ subject_icon(c.name) }}</span><span class="md-course-arrow"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></div>
+                <h3>{{ c.name }}</h3><p>Разделы: {{ c.sections_count }} · Уроки: {{ c.total_levels }}</p>
                 <div class="md-progress-label"><span>Пройдено {{ c.completed_levels }} / {{ c.total_levels }}</span><strong>{{ percent }}%</strong></div>
                 <div class="md-progress-track" role="progressbar" aria-label="Прогресс курса" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ percent }}%"></span></div>
             </a>
@@ -99,7 +107,7 @@
         <div class="md-heading"><div><div class="md-kicker">РАСШИРЯЙ ЗНАНИЯ</div><h2>Открой новые дисциплины</h2></div><a href="/courses" class="md-link">Все курсы <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div>
         <div class="md-actions">
         {% for c in all_courses %}
-            <form method="POST" action="/courses/{{ c.id }}/add" class="md-action"><span class="md-action-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7c-3-3-6-3-9-2v14c3-1 6-1 9 2 3-3 6-1 9-2V5c-3-1-6-1-9 2v14"/></svg></span><span class="md-action-copy"><strong>{{ c.name }}</strong><small>{{ c.description or 'Начать изучать' }}</small></span><button type="submit" class="md-add" aria-label="Добавить курс {{ c.name }}">+</button></form>
+            <form method="POST" action="/courses/{{ c.id }}/add" class="md-action"><span class="md-action-icon md-subject-{{ subject_kind(c.name) }}">{{ subject_icon(c.name) }}</span><span class="md-action-copy"><strong>{{ c.name }}</strong><small>{{ c.description or 'Начать изучать' }}</small></span><button type="submit" class="md-add" aria-label="Добавить курс {{ c.name }}">+</button></form>
         {% endfor %}
         </div>
     </section>
