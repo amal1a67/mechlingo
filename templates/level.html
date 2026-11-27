@@ -1,10 +1,14 @@
 {% extends "base.html" %}
 {% block title %}{{ level.name }} — Прохождение{% endblock %}
+{% set active = 'courses' %}
 {% block content %}
-<div class="level-container">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/lesson.css') }}">
+<div class="level-container ml-lesson">
+    <nav class="lesson-nav"><a href="/topic/{{ topic.id }}">← К урокам темы</a><span>РЕЖИМ ОБУЧЕНИЯ</span></nav>
+    <div class="lesson-heading"><div><div class="lesson-kicker">{{ topic.name }}</div><h1>{{ level.name }}</h1></div><span class="lesson-count" id="lessonCount">Подготовка</span></div>
 
     <div class="level-progress">
-        <div class="level-progress-bar">
+        <div class="level-progress-bar" role="progressbar" aria-label="Прогресс урока" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
             <div class="level-progress-fill" id="progressFill" style="width: 0%"></div>
         </div>
         <div class="level-hearts" id="heartsDisplay"></div>
@@ -15,7 +19,7 @@
     </div>
 
     <div class="feedback-bar" id="feedbackBar">
-        <div class="feedback-content" id="feedbackContent"></div>
+        <div class="feedback-content" id="feedbackContent" aria-live="polite"></div>
         <button class="btn btn-primary btn-block" id="nextBtn" style="display: none;">Продолжить</button>
     </div>
 
@@ -37,6 +41,8 @@
         let currentIndex = 0;
         let correctCount = 0;
         let answered = false;
+        let saving = false;
+        const escapeHtml = value => String(value ?? "").replace(/[&<>"\x27]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","\x27":"&#39;"}[ch]));
 
         // ТЕПЕРЬ Stats ТОЧНО ЕСТЬ, ТАК КАК ОН В HEAD
         let lives = Stats.current.hearts;
@@ -58,6 +64,8 @@
         function updateProgress() {
             const percent = (currentIndex / QUESTIONS.length) * 100;
             document.getElementById('progressFill').style.width = percent + '%';
+            document.querySelector('.level-progress-bar').setAttribute('aria-valuenow', String(Math.round(percent)));
+            document.getElementById('lessonCount').textContent = 'Вопрос ' + Math.min(currentIndex + 1, QUESTIONS.length) + ' / ' + QUESTIONS.length;
         }
 
         function renderQuestion() {
@@ -78,24 +86,25 @@
 
             let html = `
                 <div class="question-header">
-                    <span class="question-number">Вопрос ${currentIndex + 1} из ${QUESTIONS.length}</span>
+                    <span class="question-number">ВЫБЕРИ ПРАВИЛЬНЫЙ ОТВЕТ</span>
                 </div>
-                <div class="question-text">${q.question}</div>
+                <h2 class="question-text">${escapeHtml(q.question)}</h2>
                 <div class="options-list">
             `;
 
             shuffled.forEach((opt, i) => {
                 const letter = String.fromCharCode(65 + i);
                 html += `
-                    <button class="option-btn" onclick="selectAnswer('${opt.replace(/'/g, "\\'")}', this)">
+                    <button type="button" class="option-btn" data-option-index="${i}">
                         <span class="option-letter">${letter}</span>
-                        <span class="option-text">${opt}</span>
+                        <span class="option-text">${escapeHtml(opt)}</span><span class="option-indicator" aria-hidden="true"></span>
                     </button>
                 `;
             });
 
             html += '</div>';
             area.innerHTML = html;
+            area.querySelectorAll(".option-btn").forEach(button => button.addEventListener("click", () => selectAnswer(String(shuffled[Number(button.dataset.optionIndex)]), button)));
             document.getElementById('feedbackBar').classList.remove('visible');
             document.getElementById('nextBtn').style.display = 'none';
             updateProgress();
@@ -107,7 +116,7 @@
             answered = true;
 
             const q = QUESTIONS[currentIndex];
-            const isCorrect = selectedText === q.correct_answer.trim();
+            const isCorrect = selectedText.trim() === q.correct_answer.trim();
 
             document.querySelectorAll('.option-btn').forEach(b => {
                 b.disabled = true;
@@ -116,26 +125,33 @@
 
             if (isCorrect) {
                 btn.classList.add('correct');
+                btn.querySelector('.option-indicator').textContent = '✓';
                 correctCount++;
             } else {
                 btn.classList.add('wrong');
+                btn.querySelector('.option-indicator').textContent = '×';
                 if (lives > 0) {
                     lives = Stats.removeHeart(); 
                     updateHeartsDisplay();
                 }
                 document.querySelectorAll('.option-btn').forEach(b => {
                     const optText = b.querySelector('.option-text').textContent.trim();
-                    if (optText === q.correct_answer.trim()) b.classList.add('correct');
+                    if (optText === q.correct_answer.trim()) { b.classList.add('correct'); b.querySelector('.option-indicator').textContent = '✓'; }
                 });
             }
 
             const feedback = document.getElementById('feedbackBar');
             const content = document.getElementById('feedbackContent');
             content.innerHTML = `
-                <div class="feedback-message ${isCorrect ? 'success' : 'error'}">${isCorrect ? '✅ Верно!' : '❌ Неверно'}</div>
-                ${q.explanation ? `<div class="feedback-explanation">${q.explanation}</div>` : ''}
+                <div class="feedback-message ${isCorrect ? 'success' : 'error'}">${isCorrect ? 'Верно!' : 'Разберём ошибку'}</div>
+                ${q.explanation ? `<div class="feedback-explanation">${escapeHtml(q.explanation)}</div>` : ''}
             `;
             feedback.classList.add('visible');
+            feedback.classList.toggle('lesson-correct', isCorrect);
+            feedback.classList.toggle('lesson-wrong', !isCorrect);
+            const progress = Math.round((currentIndex + 1) / QUESTIONS.length * 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.querySelector('.level-progress-bar').setAttribute('aria-valuenow', String(progress));
             document.getElementById('nextBtn').style.display = 'block';
 
             if (lives <= 0) {
@@ -145,11 +161,16 @@
         };
 
         function nextQuestion() {
+            if (!answered || lives <= 0 || saving) return;
+            answered = false;
             currentIndex++;
             renderQuestion();
         }
 
         async function finishLevel() {
+            if (saving) return;
+            saving = true;
+            document.getElementById("feedbackBar").classList.remove("visible");
             const area = document.getElementById('questionArea');
             area.innerHTML = '<div class="question-loading">Сохранение...</div>';
 
@@ -160,6 +181,7 @@
                     body: JSON.stringify({ correct: correctCount, total: QUESTIONS.length })
                 });
                 const data = await response.json();
+                if (!response.ok || !data.success) throw new Error("Не удалось сохранить результат");
                 if (data.success) {
                     Stats.setXp(data.total_xp);
                     Stats.setStreak(data.streak);
@@ -168,7 +190,7 @@
                 }
             } catch (e) {
                 console.error(e);
-                area.innerHTML = `<div class="question-loading">Ошибка: ${e.message}</div>`;
+                area.innerHTML = `<div class="question-loading">Не удалось сохранить результат. ${escapeHtml(e.message)}</div>`;
             }
         }
 
@@ -193,6 +215,8 @@
                 </div>
             `;
             document.getElementById('progressFill').style.width = '100%';
+            document.querySelector('.level-progress-bar').setAttribute('aria-valuenow','100');
+            document.getElementById('lessonCount').textContent = 'Результат';
             document.getElementById('feedbackBar').classList.remove('visible');
 
             if (data.xp_earned > 0) Toast.show('xp', `+${data.xp_earned} XP`, 'Опыт добавлен в копилку');
@@ -213,46 +237,5 @@
 </script>
 {% endblock %}
 
-<style>
-/* ... (стили оставляй как было, они не меняются) ... */
-.level-container { max-width: 720px; margin: 0 auto; padding: 20px; min-height: calc(100vh - 100px); display: flex; flex-direction: column; }
-.level-progress { display: flex; align-items: center; gap: 16px; margin-bottom: 32px; }
-.level-progress-bar { flex: 1; height: 16px; background: var(--border); border-radius: 100px; overflow: hidden; }
-.level-progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), #a78bfa); border-radius: 100px; transition: width 0.4s ease; }
-.level-hearts { font-size: 20px; letter-spacing: 2px; display: flex; gap: 4px; }
-.question-area { flex: 1; }
-.question-loading { text-align: center; color: var(--text-secondary); padding: 60px 0; font-size: 15px; }
-.question-header { margin-bottom: 16px; }
-.question-number { font-size: 13px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
-.question-text { font-size: 24px; font-weight: 800; line-height: 1.4; letter-spacing: -0.02em; margin-bottom: 32px; color: var(--text); }
-.options-list { display: flex; flex-direction: column; gap: 12px; }
-.option-btn { display: flex; align-items: center; gap: 16px; padding: 18px 20px; background: var(--bg-elevated); border: 3px solid var(--border); border-radius: var(--radius-lg); font-size: 16px; font-weight: 600; text-align: left; color: var(--text); transition: all 0.15s; cursor: pointer; width: 100%; font-family: inherit; }
-.option-btn:hover:not(.disabled) { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 4px 0 var(--primary-light); }
-.option-letter { width: 36px; height: 36px; border-radius: 10px; background: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 900; flex-shrink: 0; border: 2px solid var(--border); font-size: 16px; }
-.option-btn.correct { background: #dcfce7; border-color: #16a34a; color: #14532d; }
-[data-theme="dark"] .option-btn.correct { background: #14532d; border-color: #22c55e; color: #dcfce7; }
-.option-btn.correct .option-letter { background: #16a34a; border-color: #16a34a; color: white; }
-.option-btn.wrong { background: #fee2e2; border-color: #dc2626; color: #7f1d1d; }
-[data-theme="dark"] .option-btn.wrong { background: #450a0a; border-color: #ef4444; color: #fecaca; }
-.option-btn.wrong .option-letter { background: #dc2626; border-color: #dc2626; color: white; }
-.option-btn.disabled { cursor: not-allowed; pointer-events: none; }
-.feedback-bar { position: sticky; bottom: 0; margin: 32px -20px -20px; padding: 20px; background: var(--bg-elevated); border-top: 2px solid var(--border); border-radius: 0; transform: translateY(100%); opacity: 0; transition: all 0.3s ease; }
-.feedback-bar.visible { transform: translateY(0); opacity: 1; }
-.feedback-message { font-size: 20px; font-weight: 900; margin-bottom: 8px; }
-.feedback-message.success { color: #16a34a; }
-.feedback-message.error { color: #dc2626; }
-[data-theme="dark"] .feedback-message.success { color: #22c55e; }
-[data-theme="dark"] .feedback-message.error { color: #ef4444; }
-.feedback-explanation { font-size: 14px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.5; }
-.result-screen { text-align: center; padding: 40px 20px; animation: slideUp 0.4s ease; }
-@keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-.result-emoji { font-size: 80px; margin-bottom: 16px; animation: bounce 0.6s ease; }
-@keyframes bounce { 0% { transform: scale(0); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-.result-screen h2 { font-size: 32px; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 16px; color: var(--primary); }
-.result-stars { font-size: 44px; letter-spacing: 6px; margin-bottom: 32px; }
-.result-stats { display: flex; justify-content: center; gap: 24px; margin-bottom: 40px; flex-wrap: wrap; }
-.result-stat { background: var(--bg-elevated); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 16px 24px; font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; color: var(--primary); }
-.result-stat-icon { font-size: 22px; }
-.result-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-</style>
+
 {% endblock %}

@@ -1,0 +1,48 @@
+
+/* Focused lesson interface */
+.level-container.ml-lesson { max-width:790px; margin:0 auto; padding:0 12px 30px; min-height:0; display:block; }
+.ml-lesson .lesson-nav { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 22px; color:var(--text-secondary); font-size:12px; font-weight:600; }
+.ml-lesson .lesson-nav a:hover { color:var(--primary); }
+.ml-lesson .lesson-nav > span,.ml-lesson .lesson-kicker { font-size:10px; font-weight:800; letter-spacing:1px; color:var(--primary); }
+.ml-lesson .lesson-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; margin-bottom:16px; }
+.ml-lesson .lesson-heading h1 { font-size:clamp(23px,3vw,32px); line-height:1.2; letter-spacing:-.7px; overflow-wrap:anywhere; }
+.ml-lesson .lesson-kicker { margin-bottom:5px; }
+.ml-lesson .lesson-count { color:var(--text-secondary); font-size:12px; font-weight:700; white-space:nowrap; }
+.ml-lesson .level-progress { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+.ml-lesson .level-progress-bar { flex:1; height:8px; border-radius:99px; overflow:hidden; background:var(--border); }
+.ml-lesson .level-progress-fill { height:100%; background:linear-gradient(90deg,#7c3aed,#a78bfa); border-radius:99px; transition:width .25s ease; }
+.ml-lesson .level-hearts { display:flex; gap:4px; font-size:16px; flex-shrink:0; }
+.ml-lesson .question-area { padding:28px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow-sm); }
+.ml-lesson .question-number { display:block; font-size:10px; color:var(--primary); font-weight:800; letter-spacing:1px; margin-bottom:12px; }
+.ml-lesson .question-text { font-size:clamp(21px,2.4vw,27px); line-height:1.4; letter-spacing:-.5px; margin:0 0 26px; font-weight:750; overflow-wrap:anywhere; }
+.ml-lesson .options-list { display:grid; gap:10px; }
+.ml-lesson .option-btn { display:flex; align-items:center; gap:13px; width:100%; min-height:64px; padding:13px 15px; background:var(--bg-elevated); color:var(--text); border:1px solid var(--border); border-radius:14px; text-align:left; font:inherit; font-weight:600; cursor:pointer; transition:background .16s ease,border-color .16s ease,transform .16s ease; }
+.ml-lesson .option-btn:hover:not(:disabled) { background:var(--primary-light); border-color:var(--primary); transform:translateY(-1px); box-shadow:none; }
+.ml-lesson .option-letter { display:grid; place-items:center; width:34px; height:34px; flex:0 0 34px; border-radius:9px; border:1px solid var(--border); background:var(--bg-hover); color:var(--text-secondary); font-weight:750; }
+.ml-lesson .option-text { flex:1; min-width:0; overflow-wrap:anywhere; }
+.ml-lesson .option-indicator { display:grid; place-items:center; border:1px solid var(--border); border-radius:50%; width:19px; height:19px; flex:0 0 19px; font-weight:800; }
+.ml-lesson .option-btn:disabled { opacity:1; cursor:default; transform:none; }
+.ml-lesson .option-btn.correct { color:var(--text); background:var(--success-light); border-color:var(--success); }
+.ml-lesson .option-btn.wrong { color:var(--text); background:var(--danger-light); border-color:var(--danger); }
+.ml-lesson .option-btn.correct .option-letter,.ml-lesson .option-btn.correct .option-indicator { background:var(--success-light); color:var(--success); border-color:var(--success); }
+.ml-lesson .option-btn.wrong .option-letter,.ml-lesson .option-btn.wrong .option-indicator { background:var(--danger-light); color:var(--danger); border-color:var(--danger); }
+.ml-lesson .feedback-bar { display:none; position:static; transform:none; opacity:1; margin:15px 0 0; padding:21px; border:1px solid var(--border); border-radius:18px; background:var(--bg-elevated); }
+.ml-lesson .feedback-bar.visible { display:block; transform:none; opacity:1; }
+.ml-lesson .feedback-bar.lesson-correct { border-left:3px solid var(--success); }
+.ml-lesson .feedback-bar.lesson-wrong { border-left:3px solid var(--danger); }
+.ml-lesson .feedback-message { font-size:19px; font-weight:800; margin-bottom:7px; }
+.ml-lesson .feedback-message.success { color:var(--success); }
+.ml-lesson .feedback-message.error { color:var(--danger); }
+.ml-lesson .feedback-explanation { font-size:14px; line-height:1.65; color:var(--text-secondary); white-space:pre-wrap; margin:0 0 17px; }
+.ml-lesson #nextBtn { margin-top:12px; min-height:44px; }
+.ml-lesson .result-screen { text-align:center; padding:22px 0; }
+.ml-lesson .result-emoji { font-size:48px; margin-bottom:8px; }
+.ml-lesson .result-screen h2 { font-size:30px; font-weight:800; color:var(--text); }
+.ml-lesson .result-stars { font-size:32px; margin:12px 0 24px; color:#eab308; }
+.ml-lesson .result-stats { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin:0 0 24px; }
+.ml-lesson .result-stat { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; min-width:0; padding:14px 6px; background:var(--bg-hover); border:1px solid var(--border); border-radius:13px; font-size:16px; font-weight:800; color:var(--text); }
+.ml-lesson .result-actions { display:flex; justify-content:center; flex-wrap:wrap; gap:10px; }
+.ml-lesson .question-loading { text-align:center; padding:30px 0; color:var(--text-secondary); }
+.ml-lesson a:focus-visible,.ml-lesson button:focus-visible { outline:2px solid var(--primary); outline-offset:3px; }
+@media(max-width:600px) { .level-container.ml-lesson { padding:0 0 24px; } .ml-lesson .question-area { padding:18px; border-radius:18px; } .ml-lesson .lesson-heading { align-items:flex-start; flex-direction:column; gap:6px; } .ml-lesson .option-btn { padding:11px; gap:9px; } .ml-lesson .lesson-nav > span { display:none; } .ml-lesson .level-hearts { font-size:13px; gap:1px; } }
+@media(prefers-reduced-motion:reduce) { .ml-lesson *, .ml-lesson *::before,.ml-lesson *::after { transition:none !important; animation:none !important; } }
