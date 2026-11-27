@@ -1,50 +1,8 @@
 {% extends "base.html" %}
-{% block title %}{{ section.name }} — {{ course.name }}{% endblock %}
+{% block title %}{{ section.name }} — MechLingo{% endblock %}
+{% set active = 'courses' %}
 {% block content %}
-<div class="page-container">
-
-    <a href="/course/{{ course.id }}" class="back-link">← К курсу «{{ course.name }}»</a>
-
-    <div class="course-hero" style="background: linear-gradient(135deg, {{ course.color }}20, {{ course.color }}10);">
-        <div class="course-hero-icon">{{ section.icon or '📖' }}</div>
-        <h1 class="course-hero-title">{{ section.name }}</h1>
-        <p class="course-hero-desc">{{ section.description or '' }}</p>
-    </div>
-
-    <section class="section">
-        <h2>📝 Темы</h2>
-        {% if topics %}
-        <div class="topics-grid">
-            {% for item in topics %}
-            <a href="/topic/{{ item.topic.id }}" class="topic-card">
-                <div class="topic-header">
-                    <div class="topic-icon">{{ item.topic.icon or '📝' }}</div>
-                    <div class="topic-progress-ring">
-                        <svg viewBox="0 0 36 36">
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--border)" stroke-width="3"/>
-                            <circle cx="18" cy="18" r="15.9155" fill="none" stroke="var(--primary)" stroke-width="3"
-                                    stroke-dasharray="{{ item.percent }}, 100" stroke-linecap="round"
-                                    transform="rotate(-90 18 18)"/>
-                        </svg>
-                        <span class="topic-progress-text">{{ item.percent }}%</span>
-                    </div>
-                </div>
-                <div class="topic-name">{{ item.topic.name }}</div>
-                <div class="topic-desc">{{ item.topic.description or '' }}</div>
-                <div class="topic-meta">
-                    <span>🎯 {{ item.completed }} / {{ item.total }} уровней</span>
-                </div>
-            </a>
-            {% endfor %}
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">📭</div>
-            <div class="empty-title">В разделе пока нет тем</div>
-            <div class="empty-text">Скоро появятся</div>
-        </div>
-        {% endif %}
-    </section>
-
-</div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/learning-path.css') }}">
+<div class="page-container ml-path">
+<nav class="lp-crumbs" aria-label="Навигация по курсу"><a href="/dashboard">Главная</a><span> / </span><a href="/course/{{ course.id }}">{{ course.name }}</a><span> / </span><span aria-current="page">{{ section.name }}</span></nav>{% set totals = namespace(done=0, count=0) %}{% for item in topics %}{% set totals.done = totals.done + item.completed %}{% set totals.count = totals.count + item.total %}{% endfor %}{% set percent = (100 * totals.done / totals.count)|int if totals.count else 0 %}<section class="lp-hero"><div class="lp-hero-copy"><div class="lp-kicker">РАЗДЕЛ КУРСА</div><h1>{{ section.name }}</h1><p>{{ section.description or course.name }}</p><div class="lp-hero-meta"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7c-3-3-6-3-9-2v14c3-1 6-1 9 2 3-3 6-1 9-2V5c-3-1-6-1-9 2v14"/></svg><span>Темы: {{ topics|length }}</span></div></div><div class="lp-summary"><div class="lp-kicker">ПРОГРЕСС РАЗДЕЛА</div><strong>{{ percent }}<small>%</small></strong><div class="lp-track" role="progressbar" aria-label="Прогресс" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ percent }}"><span style="width: {{ percent }}%"></span></div><span>Пройдено {{ totals.done }} из {{ totals.count }} уроков</span></div></section><div class="lp-heading"><div><div class="lp-kicker">УЧЕБНЫЙ МАРШРУТ</div><h2>Темы раздела</h2></div><span class="lp-muted">Всего: {{ topics|length }}</span></div>{% if topics %}<div class="lp-grid">{% for item in topics %}<a class="lp-card" href="/topic/{{ item.topic.id }}"><div class="lp-card-top"><span class="lp-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7c-3-3-6-3-9-2v14c3-1 6-1 9 2 3-3 6-1 9-2V5c-3-1-6-1-9 2v14"/></svg></span><span class="lp-index">ТЕМА {{ '%02d'|format(loop.index) }}</span><span class="lp-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></span></div><h3>{{ item.topic.name }}</h3>{% if item.topic.description %}<p>{{ item.topic.description }}</p>{% endif %}<div class="lp-card-bottom"><div class="lp-progress-label"><span>{{ item.completed }} / {{ item.total }} уроков</span><strong>{{ item.percent }}%</strong></div><div class="lp-track" role="progressbar" aria-label="Прогресс" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ item.percent }}"><span style="width: {{ item.percent }}%"></span></div><div class="lp-state">{% if item.total and item.completed >= item.total %}Завершено{% elif item.completed %}В процессе{% else %}Начать обучение{% endif %}</div></div></a>{% endfor %}</div>{% else %}<div class="empty-state"><div class="empty-title">Материалы пока не добавлены</div><div class="empty-text">Загляни позже.</div></div>{% endif %}</div>
 {% endblock %}
