@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Экзаменационные билеты — MechLingo{% endblock %}
+{% set active = 'exam' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/exam-center.css') }}">
+<div class="page-container ml-exam ml-tickets">
+<a class="eh-back" href="{{ url_for('exam_center') }}">← Подготовка к экзамену</a>
+{% if ticket is defined %}
+<a class="eh-back" href="{{ url_for('ticket_set_page',set_id=ticket.set_id) }}">← К комплекту билетов</a>
+<section class="ec-hero"><div><span class="ec-tag">УСТНЫЙ ТРЕНАЖЁР</span><h1>Билет №{{ ticket.number }}</h1><p>{{ ticket.title }}</p></div></section>
+<section class="ec-panel"><div class="ec-heading"><h2>Вопросы билета</h2><span class="ec-tag">{{ questions|length }}</span></div><p>Ответь вслух или на бумаге, как на экзамене. Затем сравни ответ с материалом.</p>
+{% for q in questions %}<article class="et-question"><div class="et-kicker">ВОПРОС {{ loop.index }}</div><h3>{{ q.question }}</h3>{% if revealed %}<div class="et-reference"><div class="et-kicker">ЭТАЛОННЫЙ МАТЕРИАЛ</div><p>{{ q.answer }}</p></div>{% endif %}</article>{% endfor %}
+{% if not revealed %}<a class="btn btn-primary" href="{{ url_for('ticket_page',ticket_id=ticket.id,show=1) }}">Показать ответы</a>{% endif %}
+</section>
+{% if revealed %}<section class="ec-panel"><h2>Как ты ответил?</h2><p>Оцени себя после сравнения. Это самооценка, не автоматическая оценка знаний.</p><form method="post" class="et-ratings"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="et-rating et-low" type="submit" name="rating" value="1"><strong>Не знаю</strong><small>Нужно изучить заново</small></button><button class="et-rating et-mid" type="submit" name="rating" value="2"><strong>Знаю частично</strong><small>Нужно повторить</small></button><button class="et-rating et-high" type="submit" name="rating" value="3"><strong>Знаю уверенно</strong><small>Могу ответить самостоятельно</small></button></form></section>{% endif %}
+<p class="ec-note">Источник комплекта: {{ ticket.source }}</p>
+{% elif collection is defined %}
+<a class="eh-back" href="{{ url_for('ticket_sets_page') }}">← Все комплекты</a>
+<section class="ec-hero"><div><span class="ec-tag">КОМПЛЕКТ БИЛЕТОВ</span><h1>{{ collection.title }}</h1><p>{{ collection.source }}</p></div></section>
+{% set studied = tickets|rejectattr('rating','none')|list|length %}
+{% set confident = tickets|selectattr('rating','equalto',3)|list|length %}
+<section class="ec-panel"><div class="ec-heading"><h2>Твоя подготовка</h2><span class="ec-tag">{{ confident }} / {{ tickets|length }} уверенно</span></div><p>Оценено билетов: {{ studied }} из {{ tickets|length }}. Уровень уверенности основан на самооценке.</p><div class="ec-track" role="progressbar" aria-label="Билеты с уверенным ответом" aria-valuemin="0" aria-valuemax="{{ tickets|length }}" aria-valuenow="{{ confident }}"><span style="width:{{ (100*confident/tickets|length)|int if tickets else 0 }}%"></span></div><div class="et-actions"><a class="btn btn-primary" href="{{ url_for('ticket_set_page',set_id=collection.id,draw='random') }}">Вытянуть билет</a>{% if confident < tickets|length %}<a class="btn btn-outline" href="{{ url_for('ticket_set_page',set_id=collection.id,draw='weak') }}">Слабые и новые</a>{% endif %}</div></section>
+<section class="ec-panel"><h2>Все билеты</h2><div class="et-ticket-grid">{% for t in tickets %}<a class="et-ticket {{ 'et-high' if t.rating==3 else 'et-mid' if t.rating==2 else 'et-low' if t.rating==1 else '' }}" href="{{ url_for('ticket_page',ticket_id=t.id) }}"><strong>№ {{ t.number }}</strong><small>{{ 'Уверенно' if t.rating==3 else 'Частично' if t.rating==2 else 'Не знаю' if t.rating==1 else 'Не пройден' }}</small></a>{% endfor %}</div></section>
+{% else %}
+<section class="ec-hero"><div><span class="ec-tag">MECHLINGO PRO</span><h1>Экзаменационные билеты</h1><p>Тренируй устные ответы по проверенным комплектам и отслеживай свою уверенность.</p></div></section>
+<section class="ec-panel"><h2>Выбери комплект</h2><div class="et-sets">{% for s in sets %}<a class="et-set" href="{{ url_for('ticket_set_page',set_id=s.id) }}"><div class="et-kicker">ЭКЗАМЕНАЦИОННЫЙ КОМПЛЕКТ</div><h3>{{ s.title }}</h3><p>{{ s.source }}</p><div class="ec-progress-label"><span>Уверенно: {{ s.confident }} / {{ s.total }}</span><strong>{{ (100*s.confident/s.total)|int }}%</strong></div><div class="ec-track"><span style="width:{{ (100*s.confident/s.total)|int }}%"></span></div><small>Оценено: {{ s.studied }} · Всего: {{ s.total }} билетов →</small></a>{% else %}<div class="ec-notice">Комплекты пока не опубликованы. Здесь появятся проверенные преподавателем билеты.</div>{% endfor %}</div></section>
+{% endif %}
+</div>
+{% endblock %}
