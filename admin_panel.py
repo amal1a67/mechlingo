@@ -3,6 +3,7 @@ import csv
 import datetime
 import io
 import json
+import os
 import secrets
 import sqlite3
 from functools import wraps
@@ -21,6 +22,10 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
     def admin_required(fn):
         @wraps(fn)
         def wrapper(*args, **kwargs):
+            # Refuse privileged access unless a production signing key is configured.
+            configured_key = os.environ.get('SECRET_KEY', '')
+            if len(configured_key) < 48:
+                abort(503, description='Configure a strong SECRET_KEY before using administration.')
             user = get_user()
             if not user:
                 return redirect(url_for('login'))
