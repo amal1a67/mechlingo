@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Активация администратора — MechLingo{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static',filename='css/admin-panel.css') }}">
+<div class="page-container ml-admin">
+<section class="ad-panel" style="max-width:560px;margin:32px auto">
+<div class="ad-kicker">MECHLINGO · УПРАВЛЕНИЕ</div>
+<h1>Активация администратора</h1>
+<p>Введите секретный код, заданный владельцем платформы в настройках сервера. Активация доступна только назначенному аккаунту и только при отсутствии администратора.</p>
+{% if error %}<div class="ad-notice error" role="alert">{{ error }}</div>{% endif %}
+<form method="post" class="ad-form">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Код активации<input type="password" name="setup_token" required autocomplete="off"></label>
+<button class="btn btn-primary" type="submit">Активировать</button>
+</form>
+</section>
+</div>
+{% endblock %}
