@@ -1,11 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, session, g
 from database import get_db, init_db, close_db
 import hashlib, os, datetime, json
+import hmac
+import secrets
+from werkzeug.security import generate_password_hash, check_password_hash
 import csv
 import io
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'mechlingo-secret-key-change-in-production')
+app.secret_key = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+app.config.update(SESSION_COOKIE_HTTPONLY=True, SESSION_COOKIE_SAMESITE='Lax',
+                  SESSION_COOKIE_SECURE=os.environ.get('RENDER') == 'true')
 app.teardown_appcontext(close_db)
 
 with app.app_context():
@@ -15,7 +20,16 @@ with app.app_context():
 # ==================== ХЕЛПЕРЫ ====================
 
 def hash_password(p):
-    return hashlib.sha256(p.encode()).hexdigest()
+    return generate_password_hash(p, method='scrypt')
+
+
+def verify_password(stored, password):
+    if len(stored) == 64 and all(c in '0123456789abcdef' for c in stored):
+        return hmac.compare_digest(stored, hashlib.sha256(password.encode()).hexdigest()), True
+    try:
+        return check_password_hash(stored, password), False
+    except (ValueError, TypeError):
+        return False, False
 
 
 def get_user():
@@ -355,6 +369,7 @@ def register():
         db.execute('INSERT INTO user_stats (user_id) VALUES (?)', [user_id])
         db.commit()
 
+        session.clear()
         session['user_id'] = user_id
         return redirect(url_for('onboarding'))
 
@@ -371,12 +386,16 @@ def login():
             return render_template('login.html', error='Заполните все поля')
 
         db = get_db()
-        user = db.execute('SELECT * FROM users WHERE username=? AND password=?',
-                          [username, hash_password(password)]).fetchone()
+        user = db.execute('SELECT * FROM users WHERE username=?', [username]).fetchone()
+        valid, legacy = verify_password(user['password'], password) if user else (False, False)
 
-        if not user:
+        if not valid:
             return render_template('login.html', error='Неверный логин или пароль')
 
+        if legacy:
+            db.execute('UPDATE users SET password=? WHERE id=? AND password=?',
+                       [hash_password(password), user['id'], user['password']])
+        session.clear()
         session['user_id'] = user['id']
         db.execute('UPDATE users SET last_login=CURRENT_TIMESTAMP WHERE id=?', [user['id']])
         db.commit()
@@ -392,7 +411,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('user_id', None)
+    session.clear()
     return redirect(url_for('landing'))
 
 
