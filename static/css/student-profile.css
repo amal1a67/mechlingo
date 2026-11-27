@@ -1,0 +1,71 @@
+
+/* Student profile — shared application palette */
+.ml-profile {max-width:1080px}
+.main-content:has(> .ml-profile) > .topbar {max-width:1080px;margin-inline:auto}
+.ml-profile .mp-heading,.ml-profile .mp-section-head {display:flex;justify-content:space-between;align-items:flex-end;gap:14px;margin-bottom:16px}
+.ml-profile .mp-heading {margin:8px 0 25px}
+.ml-profile .mp-kicker {font-size:10px;font-weight:800;letter-spacing:1.2px;color:var(--text-secondary);margin-bottom:6px}
+.ml-profile h1 {font-size:clamp(28px,3vw,38px);font-weight:800;letter-spacing:-1.3px;line-height:1.2}
+.ml-profile h2 {font-size:22px;font-weight:800;letter-spacing:-.5px;line-height:1.25}
+.ml-profile .mp-heading p {color:var(--text-secondary);font-size:14px;margin-top:8px}
+.ml-profile .mp-link {display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-size:13px;font-weight:700}
+.ml-profile .mp-link svg {width:17px;height:17px}
+.ml-profile .mp-hero {display:flex;justify-content:space-between;align-items:center;gap:22px;padding:27px;border:1px solid var(--border);border-radius:24px;background:linear-gradient(125deg,var(--bg-elevated) 35%,var(--primary-light))}
+.ml-profile .mp-person {display:flex;align-items:center;gap:18px;min-width:0}
+.ml-profile .mp-person-info {min-width:0;overflow-wrap:anywhere}
+.ml-profile .mp-avatar {display:grid;place-items:center;flex:0 0 76px;height:76px;border-radius:22px;background:linear-gradient(145deg,#60438f,#49316e);color:#fff;font-size:32px;font-weight:800;box-shadow:0 8px 20px #49316e22}
+.ml-profile .mp-person-info p {color:var(--text-secondary);font-size:13px;margin-top:6px}
+.ml-profile .mp-level {display:grid;gap:4px;padding:16px 21px;min-width:160px;border-radius:17px;background:var(--bg-elevated);border:1px solid var(--border)}
+.ml-profile .mp-level span {font-size:9px;letter-spacing:.8px;font-weight:800;color:var(--text-secondary)}
+.ml-profile .mp-level strong {font-size:35px;line-height:1.15;color:var(--primary);font-weight:800}
+.ml-profile .mp-level small {font-size:12px;color:var(--text-secondary)}
+.ml-profile .mp-section {margin-top:30px}
+.ml-profile .mp-stats {display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:13px}
+.ml-profile .mp-stat {display:flex;flex-direction:column;align-items:flex-start;gap:8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:19px;padding:18px;min-width:0}
+.ml-profile .mp-stat strong {font-size:29px;font-weight:800;letter-spacing:-1px;line-height:1.15;overflow-wrap:anywhere}
+.ml-profile .mp-stat > span:last-child {color:var(--text-secondary);font-size:12px}
+.ml-profile .mp-icon {width:42px;height:42px;flex:0 0 42px;display:grid;place-items:center;border-radius:12px}
+.ml-profile .mp-violet {color:#6d28d9;background:#f0e9ff}
+.ml-profile .mp-amber {color:#a05a13;background:#fdf0dc}
+.ml-profile .mp-green {color:#15803d;background:#dcfce7}
+.ml-profile .mp-blue {color:#2563b6;background:#e2edff}
+[data-theme="dark"] .ml-profile .mp-violet {color:#c4b5fd;background:#352a4c}
+[data-theme="dark"] .ml-profile .mp-amber {color:#fcd38b;background:#44331e}
+[data-theme="dark"] .ml-profile .mp-green {color:#5eead4;background:#173c38}
+[data-theme="dark"] .ml-profile .mp-blue {color:#93c5fd;background:#223651}
+.ml-profile .mp-middle {display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:15px;margin-top:24px}
+.ml-profile .mp-panel {min-width:0;padding:22px;border:1px solid var(--border);background:var(--bg-elevated);border-radius:20px}
+.ml-profile .mp-week-total {font-size:13px;color:var(--primary);font-weight:800;white-space:nowrap}
+.ml-profile .mp-chart {display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px;margin:20px 0 14px}
+.ml-profile .mp-day {min-width:0;display:grid;justify-items:center;gap:7px}
+.ml-profile .mp-day-value {font-size:11px;font-weight:700;color:var(--text-secondary);overflow-wrap:anywhere}
+.ml-profile .mp-bar-track {height:112px;width:min(28px,100%);background:var(--bg-hover);border-radius:8px;display:flex;align-items:flex-end;overflow:hidden}
+.ml-profile .mp-bar-track > span {width:100%;display:block;background:linear-gradient(0deg,#7c3aed,#a78bfa);border-radius:8px}
+.ml-profile .mp-day-label {font-size:11px;color:var(--text-secondary)}
+.ml-profile .mp-today .mp-day-label {color:var(--primary);font-weight:800}
+.ml-profile .mp-note {font-size:12px;color:var(--text-secondary);line-height:1.6}
+.ml-profile .mp-course-list {display:grid;gap:9px;margin:0 0 17px}
+.ml-profile .mp-course-list a {display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:13px}
+.ml-profile .mp-course-list a:hover {border-color:var(--primary)}
+.ml-profile .mp-course-list strong {flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px}
+.ml-profile .mp-course-list a > svg {width:16px;height:16px;color:var(--text-secondary);flex-shrink:0}
+.ml-profile .mp-course-list .mp-icon {width:34px;height:34px;flex-basis:34px;border-radius:9px}
+.ml-profile .mp-course-list .mp-icon svg {width:18px;height:18px}
+.ml-profile .mp-achievement-progress {height:7px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:18px}
+.ml-profile .mp-achievement-progress span {display:block;height:100%;background:linear-gradient(90deg,#7c3aed,#a78bfa);border-radius:99px}
+.ml-profile .mp-achievements {display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));gap:13px}
+.ml-profile .mp-achievement {padding:17px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:17px;min-width:0}
+.ml-profile .mp-achievement-top {display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:13px}
+.ml-profile .mp-medal {width:45px;height:45px;display:grid;place-items:center;font-size:24px;border-radius:13px;background:var(--bg-hover);color:var(--text-secondary)}
+.ml-profile .mp-earned .mp-medal {background:var(--primary-light);color:var(--primary)}
+.ml-profile .mp-status {font-size:10px;font-weight:700;color:var(--text-secondary)}
+.ml-profile .mp-earned .mp-status {color:var(--success)}
+.ml-profile .mp-achievement h3 {font-size:15px;overflow-wrap:anywhere}
+.ml-profile .mp-achievement p {color:var(--text-secondary);font-size:12px;margin-top:6px;overflow-wrap:anywhere}
+.ml-profile .mp-account {margin-top:28px}
+.ml-profile .mp-account dl {margin-top:15px;display:grid;gap:12px}
+.ml-profile .mp-account dl > div {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:12px;border-top:1px solid var(--border);padding-top:12px}
+.ml-profile .mp-account dt {color:var(--text-secondary);font-size:13px}
+.ml-profile .mp-account dd {font-size:13px;overflow-wrap:anywhere;text-align:right}
+.ml-profile a:focus-visible {outline:2px solid var(--primary);outline-offset:3px}
+@media(max-width:680px){.ml-profile .mp-heading {align-items:flex-start;flex-direction:column}.ml-profile .mp-hero {flex-direction:column;align-items:stretch;padding:19px}.ml-profile .mp-avatar {flex-basis:58px;height:58px;font-size:25px;border-radius:16px}.ml-profile .mp-stats {grid-template-columns:repeat(2,minmax(0,1fr))}.ml-profile .mp-middle {grid-template-columns:1fr}.ml-profile .mp-panel {padding:17px}.ml-profile .mp-stat {padding:14px}.ml-profile .mp-account dl > div {grid-template-columns:1fr;gap:4px}.ml-profile .mp-account dd {text-align:left}}
