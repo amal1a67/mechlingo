@@ -49,3 +49,5 @@
   .app-layout > .sidebar, .sidebar .nav-item, .topbar .stat-pill { transition: none; }
   .topbar .stat-pill.pop span { animation: none; }
 }
+
+.sidebar .shell-pro-nav {gap:8px;align-items:center}.sidebar .shell-pro-nav > span {flex:1;min-width:0;font-size:12px;line-height:1.3;white-space:normal}.sidebar .shell-pro-nav > svg {flex-shrink:0}.sidebar .shell-pro-nav > small {font-size:9px;font-weight:800;color:var(--primary);background:var(--primary-light);padding:3px 5px;border-radius:5px;flex-shrink:0}
