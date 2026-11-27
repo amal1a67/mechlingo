@@ -911,42 +911,133 @@ def exam_setup():
     if not has_pro(user):
         return redirect(url_for('exam_center'))
     course_id = request.args.get('course_id', type=int)
-    return render_template('exam.html', user=user, stats=get_user_stats(user['id']), course_id=course_id)
+    return render_template('exam.html', user=user, stats=get_user_stats(user['id']), course_id=course_id, mode='mistakes' if request.args.get('mode') == 'mistakes' else 'exam')
 
 
-@app.route('/api/exam/start', methods=['GET'])
+@app.route('/api/exam/start', methods=['POST'])
 @login_required
 def api_exam_start():
-    if not has_pro(get_user()):
+    import secrets, time
+    user = get_user()
+    if not has_pro(user):
         return jsonify({'error': 'Требуется доступ PRO'}), 403
     db = get_db()
     course_id = request.args.get('course_id', type=int)
-    questions = db.execute("""
-        SELECT lq.* FROM level_questions lq
-        JOIN course_levels l ON l.id=lq.level_id
+    mode = 'mistakes' if request.args.get('mode') == 'mistakes' else 'exam'
+    rows = db.execute("""
+        SELECT q.* FROM level_questions q
+        JOIN course_levels l ON l.id=q.level_id
         JOIN course_topics t ON t.id=l.topic_id
         JOIN course_sections s ON s.id=t.section_id
         JOIN courses c ON c.id=s.course_id
         WHERE c.is_active=1 AND (? IS NULL OR c.id=?)
-        ORDER BY RANDOM() LIMIT 20
-    """, [course_id, course_id]).fetchall()
-
-    q_list = []
-    for q in questions:
+        AND (?='exam' OR EXISTS (SELECT 1 FROM exam_mistakes m
+            WHERE m.user_id=? AND m.question_id=q.id AND m.resolved=0))
+        ORDER BY RANDOM()
+    """, [course_id, course_id, mode, user['id']]).fetchall()
+    valid = []
+    for q in rows:
         try:
-            options = json.loads(q['options_json']) if q['options_json'] else []
-        except:
-            options = []
-            
-        q_list.append({
-            'id': q['id'],
-            'question': q['question'],
-            'options': options,
-            'correct_answer': q['correct_answer'],
-            'explanation': q['explanation'] or '',
-        })
-        
-    return jsonify({'questions': q_list})
+            options = json.loads(q['options_json'])
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(options, list) or not all(isinstance(o, str) for o in options) or q['correct_answer'] not in options or len(options)<2:
+            continue
+        valid.append((q, options))
+        if len(valid)==20:
+            break
+    if not valid:
+        return jsonify({'error': 'Нет доступных вопросов'}), 404
+    token = secrets.token_urlsafe(32)
+    now = int(time.time())
+    attempt = db.execute('INSERT INTO exam_attempts(user_id,course_id,mode,token,started_at,total) VALUES (?,?,?,?,?,?)',
+                         [user['id'],course_id,mode,token,now,len(valid)]).lastrowid
+    for i,(q,options) in enumerate(valid):
+        db.execute('INSERT INTO exam_attempt_questions(attempt_id,position,question_id,question,options_json,correct_answer,explanation) VALUES (?,?,?,?,?,?,?)',
+                   [attempt,i,q['id'],q['question'],json.dumps(options,ensure_ascii=False),q['correct_answer'],q['explanation']])
+    db.commit()
+    return jsonify({'token':token,'seconds':900,'questions':[{'question':q['question'],'options':options} for q,options in valid]})
+
+
+@app.route('/api/exam/finish', methods=['POST'])
+@login_required
+def api_exam_finish():
+    import time
+    user = get_user()
+    if not has_pro(user):
+        return jsonify({'error':'Требуется доступ PRO'}),403
+    payload = request.get_json(silent=True)
+    if not isinstance(payload,dict) or not isinstance(payload.get('token'),str) or not isinstance(payload.get('answers'),list):
+        return jsonify({'error':'Некорректные данные'}),400
+    db = get_db()
+    db.execute('BEGIN IMMEDIATE')
+    attempt = db.execute('SELECT * FROM exam_attempts WHERE token=? AND user_id=?',[payload['token'],user['id']]).fetchone()
+    if not attempt:
+        db.rollback()
+        return jsonify({'error':'Попытка не найдена'}),404
+    rows = db.execute('SELECT * FROM exam_attempt_questions WHERE attempt_id=? ORDER BY position',[attempt['id']]).fetchall()
+    if attempt['finished_at'] is None:
+        answers = payload['answers']
+        now = int(time.time())
+        if len(answers)!=len(rows) or any(v is not None and not isinstance(v,str) for v in answers):
+            db.rollback()
+            return jsonify({'error':'Некорректные ответы'}),400
+        if now > attempt['started_at']+930:
+            db.rollback()
+            return jsonify({'error':'Время отправки истекло'}),409
+        correct = 0
+        for q,answer in zip(rows,answers):
+            if answer is not None and answer not in json.loads(q['options_json']):
+                db.rollback()
+                return jsonify({'error':'Недопустимый вариант'}),400
+            ok = int(answer == q['correct_answer'])
+            correct += ok
+            db.execute('UPDATE exam_attempt_questions SET selected_answer=?,is_correct=? WHERE attempt_id=? AND position=?',[answer,ok,attempt['id'],q['position']])
+            if not ok:
+                db.execute("""
+                    INSERT INTO exam_mistakes(user_id,question_id,mistakes,resolved)
+                    SELECT ?,id,1,0 FROM level_questions WHERE id=?
+                    ON CONFLICT(user_id,question_id) DO UPDATE SET mistakes=mistakes+1,resolved=0
+                """,[user['id'],q['question_id']])
+            else:
+                db.execute('UPDATE exam_mistakes SET resolved=1 WHERE user_id=? AND question_id=?',[user['id'],q['question_id']])
+        db.execute('UPDATE exam_attempts SET finished_at=?,correct=? WHERE id=?',[now,correct,attempt['id']])
+        db.commit()
+    else:
+        correct = attempt['correct']
+        db.rollback()
+    return jsonify({'correct':correct,'total':attempt['total'],'percent':round(100*correct/attempt['total']),'attempt_id':attempt['id']})
+
+
+@app.route('/exam-history')
+@login_required
+def exam_history():
+    user=get_user()
+    if not has_pro(user):
+        return redirect(url_for('exam_center'))
+    db=get_db()
+    history=db.execute("""SELECT a.*,c.name AS course_name,datetime(a.finished_at,'unixepoch') AS date
+        FROM exam_attempts a LEFT JOIN courses c ON c.id=a.course_id
+        WHERE a.user_id=? AND a.finished_at IS NOT NULL ORDER BY a.finished_at DESC LIMIT 50""",[user['id']]).fetchall()
+    mistakes=db.execute("""SELECT m.*,q.question,t.name AS topic_name
+        FROM exam_mistakes m JOIN level_questions q ON q.id=m.question_id
+        JOIN course_levels l ON l.id=q.level_id JOIN course_topics t ON t.id=l.topic_id
+        WHERE m.user_id=? AND m.resolved=0 ORDER BY m.mistakes DESC LIMIT 100""",[user['id']]).fetchall()
+    return render_template('exam_history.html',user=user,stats=get_user_stats(user['id']),history=history,mistakes=mistakes)
+
+
+@app.route('/exam-history/<int:attempt_id>')
+@login_required
+def exam_attempt_detail(attempt_id):
+    user=get_user()
+    if not has_pro(user):
+        return redirect(url_for('exam_center'))
+    db=get_db()
+    attempt=db.execute('SELECT * FROM exam_attempts WHERE id=? AND user_id=? AND finished_at IS NOT NULL',[attempt_id,user['id']]).fetchone()
+    if not attempt:
+        return redirect(url_for('exam_history'))
+    questions=db.execute('SELECT * FROM exam_attempt_questions WHERE attempt_id=? ORDER BY position',[attempt_id]).fetchall()
+    return render_template('exam_history.html',user=user,stats=get_user_stats(user['id']),attempt=attempt,questions=questions)
 
 
 # ==================== ПОВТОРЕНИЕ ====================
