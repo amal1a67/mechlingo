@@ -107,7 +107,7 @@
         <div class="md-heading"><div><div class="md-kicker">РАСШИРЯЙ ЗНАНИЯ</div><h2>Открой новые дисциплины</h2></div><a href="/courses" class="md-link">Все курсы <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div>
         <div class="md-actions">
         {% for c in all_courses %}
-            <form method="POST" action="/courses/{{ c.id }}/add" class="md-action"><span class="md-action-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7c-3-3-6-3-9-2v14c3-1 6-1 9 2 3-3 6-1 9-2V5c-3-1-6-1-9 2v14"/></svg></span><span class="md-action-copy"><strong>{{ c.name }}</strong><small>{{ c.description or 'Начать изучать' }}</small></span><button type="submit" class="md-add" aria-label="Добавить курс {{ c.name }}">+</button></form>
+            <form method="POST" action="/courses/{{ c.id }}/add" class="md-action"><span class="md-action-icon md-subject-{{ subject_kind(c.name) }}">{{ subject_icon(c.name) }}</span><span class="md-action-copy"><strong>{{ c.name }}</strong><small>{{ c.description or 'Начать изучать' }}</small></span><button type="submit" class="md-add" aria-label="Добавить курс {{ c.name }}">+</button></form>
         {% endfor %}
         </div>
     </section>
