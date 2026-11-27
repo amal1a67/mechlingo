@@ -893,8 +893,8 @@ def exam_center():
                 pending = sorted((s for s in sections if s['total'] > s['completed']), key=lambda s: s['completed']/s['total'])
                 # A planning heuristic, not a prediction of exam performance.
                 slots = max(1, minutes // 30)
-                for i, section in enumerate(pending):
-                    day = min(days, 1 + i // slots)
+                for i, section in enumerate(pending[:days * slots]):
+                    day = 1 + i // slots
                     plan.append({'day': day, 'section': section, 'minutes': 30})
             except ValueError:
                 error = 'Выбери дату экзамена от завтра до одного года вперёд.'
