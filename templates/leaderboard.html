@@ -1,65 +1,53 @@
 {% extends "base.html" %}
 {% block title %}Рейтинг — MechLingo{% endblock %}
 {% set active = 'leaderboard' %}
-
 {% block content %}
-<div class="page-container">
-    
-    <div class="page-header" style="text-align: center; margin-bottom: 40px;">
-        <div style="font-size: 64px; margin-bottom: 10px;">🏆</div>
-        <h1>Зал славы</h1>
-        <p class="page-subtitle">Соревнование по недельному XP (сбрасывается каждый понедельник)</p>
-    </div>
-
-    <div style="max-width: 600px; margin: 0 auto;">
-        
-        <!-- Ваша позиция -->
-        <div class="welcome-card" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center;">
-            <div class="welcome-text">
-                <h1 style="font-size: 16px;">Ваш результат</h1>
-                <p>{{ stats.weekly_xp or 0 }} XP за эту неделю</p>
-            </div>
-            <div class="streak-big" style="font-size: 24px; color: var(--primary);">
-                #{{ top_users|length + 1 if stats.weekly_xp == 0 else '?' }}
-            </div>
-        </div>
-
-        <!-- Список лидеров -->
-        <div class="sections-list">
-            {% for u in top_users %}
-            <div class="section-card" style="{% if u.username == user.username %}border-color: var(--primary); background: var(--primary-light);{% endif %}">
-                
-                <div style="width: 30px; font-size: 18px; font-weight: 800; color: {% if loop.index == 1 %}#fbbf24{% elif loop.index == 2 %}#94a3b8{% elif loop.index == 3 %}#b45309{% else %}var(--text-muted){% endif %}; text-align: center;">
-                    {{ loop.index }}
-                </div>
-
-                <div class="user-avatar" style="width: 40px; height: 40px; font-size: 16px; margin-left: 10px;">
-                    {{ u.username[0]|upper }}
-                </div>
-
-                <div class="section-info" style="margin-left: 12px;">
-                    <div class="section-name" style="font-size: 15px;">
-                        {{ u.username }}
-                        {% if u.username == user.username %}(Вы){% endif %}
-                    </div>
-                    <div class="section-desc">Уровень {{ u.level }} · 🔥 {{ u.streak }}</div>
-                </div>
-
-                <div style="font-weight: 800; font-size: 16px; color: var(--primary);">
-                    {{ u.weekly_xp }} XP
-                </div>
-            </div>
-            {% endfor %}
-            
-            {% if not top_users %}
-            <div class="empty-state">
-                <div class="empty-title">Пока тихо</div>
-                <div class="empty-text">Никто еще не набрал XP на этой неделе. Будьте первым!</div>
-                <a href="/dashboard" class="btn btn-primary" style="margin-top: 16px;">Начать учиться</a>
-            </div>
-            {% endif %}
-        </div>
-        
-    </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/leaderboard.css') }}">
+<div class="ml-ladder">
+  <header class="ll-header">
+    <div><span class="ll-eyebrow">СООБЩЕСТВО</span><h1>Рейтинг студентов</h1><p>Учись в своём темпе и наблюдай за прогрессом.</p></div>
+    <span class="ll-period"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 10h18"/></svg> Недельный XP</span>
+  </header>
+  <div class="ll-layout">
+    <section class="ll-board" aria-labelledby="ll-title">
+      <div class="ll-board-heading"><div class="ll-trophy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3h8v6a4 4 0 0 1-8 0V3ZM8 5H4v2a4 4 0 0 0 4 4m8-6h4v2a4 4 0 0 1-4 4M12 13v5m-4 3h8m-6-3h4"/></svg></div><div><h2 id="ll-title">Таблица лидеров</h2><p>{{ active_count }} участников с XP · до 20 мест</p></div></div>
+      {% if top_users %}
+      <div class="ll-columns"><span>Место / студент</span><span>Опыт</span></div>
+      <ol class="ll-list">
+        {% for u in top_users %}
+        {% if loop.first %}<li class="ll-zone"><span></span>Лидеры<span></span></li>{% endif %}
+        {% if loop.index > 1 and u.place > 3 and top_users[loop.index0-1].place <= 3 %}<li class="ll-zone ll-zone-rest"><span></span>Участники<span></span></li>{% endif %}
+        <li class="ll-row{% if u.id == user.id %} ll-self{% endif %}{% if u.place <= 3 %} ll-top{% endif %}">
+          <span class="ll-rank ll-rank-{{ u.place if u.place <= 3 else 'other' }}" aria-label="Место {{ u.place }}">{{ u.place }}</span>
+          <span class="ll-avatar ll-avatar-{{ u.id % 5 }}">{{ u.username[0]|upper }}</span>
+          <div class="ll-person"><strong>{{ u.username }}{% if u.id == user.id %}<small>Ты</small>{% endif %}</strong><span>Уровень {{ u.level }} · Серия {{ u.streak or 0 }}</span></div>
+          <strong class="ll-xp">{{ '{:,}'.format(u.weekly_xp).replace(',', ' ') }} <small>XP</small></strong>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <div class="ll-empty"><h3>Первое место свободно</h3><p>Заверши урок, чтобы появиться в рейтинге.</p><a class="btn btn-primary" href="{{ url_for('dashboard') }}">Продолжить обучение</a></div>
+      {% endif %}
+      {% if own_place and user.id not in top_users|map(attribute='id')|list %}
+      <div class="ll-outside"><span>Твоя позиция вне списка</span><strong>#{{ own_place }} · {{ stats.weekly_xp }} XP</strong></div>
+      {% endif %}
+    </section>
+    <aside class="ll-side">
+      <section class="ll-card ll-own">
+        <span class="ll-eyebrow">ТВОЙ РЕЗУЛЬТАТ</span>
+        <div class="ll-own-rank">{% if own_place %}<strong>{{ own_place }}</strong><span>место</span>{% else %}<strong>—</strong><span>пока без места</span>{% endif %}</div>
+        <div class="ll-own-stats"><div><span>Опыт за период</span><strong>{{ stats.weekly_xp or 0 }} XP</strong></div><div><span>Серия</span><strong>{{ stats.streak or 0 }} дн.</strong></div></div>
+      </section>
+      <section class="ll-card ll-goal">
+        <span class="ll-eyebrow">СЛЕДУЮЩАЯ ЦЕЛЬ</span>
+        {% if next_gap is not none %}
+        <h2>Ещё {{ next_gap }} XP</h2><p>Столько нужно, чтобы обойти участника с ближайшим более высоким результатом.</p>
+        {% elif own_place == 1 %}<h2>Ты в лидерах</h2><p>Продолжай заниматься и сохраняй позицию.</p>
+        {% else %}<h2>Начни с урока</h2><p>Первый заработанный XP откроет твою позицию в рейтинге.</p>{% endif %}
+        <a class="btn btn-primary" href="{{ url_for('dashboard') }}">Продолжить обучение <span aria-hidden="true">→</span></a>
+      </section>
+      <section class="ll-card ll-note"><h3>Как считается рейтинг?</h3><p>Места зависят от накопленного недельного XP. При равном опыте участники делят место.</p></section>
+    </aside>
+  </div>
 </div>
 {% endblock %}

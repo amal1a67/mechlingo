@@ -1212,19 +1212,35 @@ def leaderboard():
     user = get_user()
     db = get_db()
     stats = get_user_stats(user['id'])
-    
-    top_users = db.execute('''
-        SELECT u.username, u.avatar, s.weekly_xp, s.level, s.streak
+
+    # Preserve the existing weekly XP metric and top-20 limit.
+    # Equal scores share a place; id is only a stable display tie-breaker.
+    top_users = db.execute("""
+        SELECT u.id, u.username, s.weekly_xp, s.level, s.streak,
+               RANK() OVER (ORDER BY s.weekly_xp DESC) AS place
         FROM users u
         JOIN user_stats s ON u.id = s.user_id
         WHERE s.weekly_xp > 0
-        ORDER BY s.weekly_xp DESC
+        ORDER BY s.weekly_xp DESC, u.id ASC
         LIMIT 20
-    ''').fetchall()
+    """).fetchall()
 
-    return render_template('leaderboard.html',
-                           user=user, stats=stats,
-                           top_users=top_users)
+    own_xp = stats['weekly_xp'] or 0
+    active_count = db.execute(
+        'SELECT COUNT(*) FROM user_stats WHERE weekly_xp > 0').fetchone()[0]
+    own_place = None
+    next_gap = None
+    if own_xp > 0:
+        own_place = 1 + db.execute(
+            'SELECT COUNT(*) FROM user_stats WHERE weekly_xp > ?', [own_xp]).fetchone()[0]
+        next_xp = db.execute(
+            'SELECT MIN(weekly_xp) FROM user_stats WHERE weekly_xp > ?', [own_xp]).fetchone()[0]
+        if next_xp is not None:
+            next_gap = next_xp - own_xp + 1
+
+    return render_template('leaderboard.html', user=user, stats=stats,
+                           top_users=top_users, own_place=own_place,
+                           next_gap=next_gap, active_count=active_count)
 
 
 # ==================== ПРОФИЛЬ ====================
