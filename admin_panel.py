@@ -55,6 +55,51 @@ def register_admin(app, get_user, get_user_stats, get_db, has_pro):
             raise ValueError('Максимальный размер файла — 2 МБ.')
         return raw.decode('utf-8-sig')
 
+    @app.route('/admin/setup', methods=['GET', 'POST'])
+    def admin_setup():
+        # Bootstrap only an authenticated, explicitly configured account.
+        configured_key = os.environ.get('SECRET_KEY', '')
+        username = os.environ.get('ADMIN_USERNAME', '').strip()
+        setup_token = os.environ.get('ADMIN_SETUP_TOKEN', '')
+        if len(configured_key) < 48 or not username or len(setup_token) < 48:
+            abort(404)
+        user = get_user()
+        if not user:
+            return redirect(url_for('login'))
+        db = get_db()
+        if user['username'] != username:
+            abort(404)
+        if db.execute("SELECT id FROM users WHERE role='admin' LIMIT 1").fetchone():
+            return redirect(url_for('admin_home')) if user['role'] == 'admin' else abort(404)
+        if not session.get('admin_setup_csrf'):
+            session['admin_setup_csrf'] = secrets.token_urlsafe(32)
+        error = None
+        if request.method == 'POST':
+            csrf = request.form.get('csrf', '')
+            supplied = request.form.get('setup_token', '')
+            if not secrets.compare_digest(session['admin_setup_csrf'], csrf):
+                abort(400)
+            if not secrets.compare_digest(setup_token.encode('utf-8'), supplied.encode('utf-8')):
+                error = 'Код активации неверный.'
+            else:
+                db.execute('BEGIN IMMEDIATE')
+                result = db.execute("""
+                    UPDATE users SET role='admin'
+                    WHERE id=? AND username=? AND NOT EXISTS
+                    (SELECT 1 FROM users WHERE role='admin')
+                """, [user['id'], username])
+                db.commit()
+                if not result.rowcount:
+                    abort(409)
+                session.pop('admin_setup_csrf', None)
+                app.logger.info('Initial administrator setup completed')
+                return redirect(url_for('admin_home'))
+        response = app.make_response(render_template(
+            'admin_setup.html', user=user, stats=get_user_stats(user['id']),
+            csrf=session['admin_setup_csrf'], error=error))
+        response.headers['Cache-Control'] = 'no-store'
+        return response
+
     @app.cli.command('grant-admin')
     def grant_admin():
         import click
