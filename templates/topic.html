@@ -3,21 +3,14 @@
 {% set active = 'courses' %}
 
 {% block content %}
-<div class="page-container">
-    
-    <a href="/section/{{ section.id }}" class="back-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="15 18 9 12 15 6"/>
-        </svg>
-        Назад к разделу
-    </a>
-
-    <div class="topic-hero">
-        <div class="topic-hero-icon">{{ topic.icon or '📝' }}</div>
-        <h1>{{ topic.name }}</h1>
-        <p>{{ topic.description or course.name }}</p>
-    </div>
-
+<link rel="stylesheet" href="{{ url_for('static', filename='css/learning-path.css') }}">
+<div class="page-container ml-path">
+<nav class="lp-crumbs" aria-label="Навигация по курсу"><a href="/dashboard">Главная</a><span> / </span><a href="/course/{{ course.id }}">{{ course.name }}</a><span> / </span><a href="/section/{{ section.id }}">{{ section.name }}</a><span> / </span><span aria-current="page">{{ topic.name }}</span></nav>
+{% set done = levels|selectattr('status','equalto','completed')|list|length %}
+{% set percent = (100 * done / (levels|length))|int if levels else 0 %}
+<section class="lp-hero"><div class="lp-hero-copy"><div class="lp-kicker">ТЕМА КУРСА</div><h1>{{ topic.name }}</h1><p>{{ topic.description or course.name }}</p><div class="lp-hero-meta">Уроки: {{ levels|length }}</div></div><div class="lp-summary"><div class="lp-kicker">ПРОГРЕСС ТЕМЫ</div><strong>{{ percent }}<small>%</small></strong><div class="lp-track" role="progressbar" aria-label="Прогресс темы" aria-valuenow="{{ percent }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ percent }}%"></span></div><span>Пройдено {{ done }} из {{ levels|length }} уроков</span></div></section>
+<div class="lp-heading"><div><div class="lp-kicker">ПОШАГОВОЕ ОБУЧЕНИЕ</div><h2>Уроки темы</h2></div></div>
+{% if not levels %}<div class="empty-state"><div class="empty-title">Уроки пока не добавлены</div></div>{% endif %}
     <!-- СПИСОК УРОВНЕЙ -->
     <div class="levels-list">
         {% for item in levels %}
@@ -26,7 +19,7 @@
             {% set is_completed = item.status == 'completed' %}
             {% set is_current = item.status == 'unlocked' %}
             
-            <a href="{% if not is_locked %}/level/{{ lv.id }}{% else %}#{% endif %}" 
+            <a {% if not is_locked %}href="/level/{{ lv.id }}"{% else %}aria-disabled="true"{% endif %} 
                class="level-card {% if is_locked %}locked{% endif %} {% if is_current %}current{% endif %}">
                 
                 <!-- Левая часть: Круг с иконкой -->
@@ -42,7 +35,7 @@
                 </div>
 
                 <!-- Центральная часть -->
-                <div class="level-info">
+                <div class="level-info"><div class="lp-lesson-number">УРОК {{ '%02d'|format(loop.index) }}</div>
                     <div class="level-title">{{ lv.name }}</div>
                     <div class="level-stars">
                         {% if is_completed %}
