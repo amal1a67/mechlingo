@@ -111,6 +111,28 @@ def init_db():
             FOREIGN KEY (level_id) REFERENCES course_levels (id) ON DELETE CASCADE
         );
 
+        CREATE TABLE IF NOT EXISTS ticket_sets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL UNIQUE,
+            source TEXT NOT NULL DEFAULT '',
+            is_published INTEGER NOT NULL DEFAULT 0
+        );
+        CREATE TABLE IF NOT EXISTS oral_tickets (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            set_id INTEGER NOT NULL REFERENCES ticket_sets(id) ON DELETE CASCADE,
+            number INTEGER NOT NULL,
+            questions_json TEXT NOT NULL,
+            UNIQUE(set_id, number)
+        );
+        CREATE TABLE IF NOT EXISTS ticket_ratings (
+            user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            ticket_id INTEGER NOT NULL REFERENCES oral_tickets(id) ON DELETE CASCADE,
+            rating INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 3),
+            attempts INTEGER NOT NULL DEFAULT 1,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY(user_id,ticket_id)
+        );
+
         CREATE TABLE IF NOT EXISTS exam_attempts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
