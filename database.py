@@ -173,6 +173,7 @@ def init_db():
         if column not in cols:
             db.execute(f'ALTER TABLE {table} ADD COLUMN {ddl}')
 
+    add_column_if_missing('users', 'pro_until', 'pro_until TEXT')
     add_column_if_missing('user_stats', 'daily_goal', 'daily_goal INTEGER DEFAULT 50')
     add_column_if_missing('daily_activity', 'goal_reached', 'goal_reached INTEGER DEFAULT 0')
     add_column_if_missing('daily_activity', 'goal_celebrated', 'goal_celebrated INTEGER DEFAULT 0')
