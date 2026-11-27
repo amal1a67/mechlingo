@@ -1,78 +1,37 @@
 {% extends "base.html" %}
 {% block title %}Профиль — MechLingo{% endblock %}
 {% set active = 'profile' %}
-
 {% block content %}
-<div class="page-container">
-    
-    <!-- Шапка профиля -->
-    <div class="profile-header">
-        <div class="profile-avatar">{{ user.username[0]|upper }}</div>
-        <div class="profile-info">
-            <h1>{{ user.username }}</h1>
-            <p>{{ user.email }} · С нами с {{ user.created_at[:10] }}</p>
-        </div>
-    </div>
-
-    <!-- Статистика -->
-    <div class="stats-grid">
-        <div class="stat-card-lg">
-            <div class="stat-card-icon" style="color: var(--primary);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            </div>
-            <div class="stat-card-value">{{ stats.xp }}</div>
-            <div class="stat-card-label">Всего XP</div>
-        </div>
-        
-        <div class="stat-card-lg">
-            <div class="stat-card-icon" style="color: #f97316;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c1 3 3 5 3 8a3 3 0 0 1-6 0c0-3 2-5 3-8z"/></svg>
-            </div>
-            <div class="stat-card-value">{{ stats.streak }}</div>
-            <div class="stat-card-label">Дней подряд</div>
-        </div>
-
-        <div class="stat-card-lg">
-            <div class="stat-card-icon" style="color: #16a34a;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            </div>
-            <div class="stat-card-value">{{ stats.total_lessons }}</div>
-            <div class="stat-card-label">Уроков пройдено</div>
-        </div>
-
-        <div class="stat-card-lg">
-            <div class="stat-card-icon" style="color: #ca8a04;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            </div>
-            <div class="stat-card-value">{{ stats.level }}</div>
-            <div class="stat-card-label">Уровень</div>
-        </div>
-    </div>
-
-    <!-- Достижения -->
-    <section class="section">
-        <h2>Достижения</h2>
-        
-        <div class="achievements-grid">
-            {% for a in all_achievements %}
-                {% set is_earned = a.id in earned_ids %}
-                <div class="achievement-card" style="{% if not is_earned %}opacity: 0.5; grayscale: 1;{% endif %}">
-                    <div style="font-size: 32px; margin-bottom: 10px;">
-                        {% if is_earned %}{{ a.icon }}{% else %}🔒{% endif %}
-                    </div>
-                    <div class="achievement-title" style="{% if is_earned %}color: var(--primary);{% endif %}">
-                        {{ a.title }}
-                    </div>
-                    <div class="achievement-desc">
-                        {{ a.description }}
-                    </div>
-                    {% if is_earned %}
-                    <div style="font-size: 10px; color: var(--success); font-weight: 700; margin-top: 8px;">ПОЛУЧЕНО</div>
-                    {% endif %}
-                </div>
-            {% endfor %}
-        </div>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student-profile.css') }}">
+<div class="page-container ml-profile">
+    <div class="mp-heading"><div><div class="mp-kicker">ЛИЧНОЕ ПРОСТРАНСТВО</div><h1>Мой профиль</h1><p>Твой путь в медицине — в цифрах и достижениях.</p></div><a class="mp-link" href="/dashboard">К обучению <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a></div>
+    <section class="mp-hero">
+        <div class="mp-person"><div class="mp-avatar">{{ user.username[0]|upper }}</div><div class="mp-person-info"><div class="mp-kicker">СТУДЕНТ MECHLINGO</div><h2>{% if '@' in user.username %}Мой аккаунт{% else %}{{ user.username }}{% endif %}</h2><p>С нами с {{ user.created_at[:10] }}</p></div></div>
+        <div class="mp-level"><span>ТЕКУЩИЙ УРОВЕНЬ</span><strong>{{ stats.level }}</strong><small>{{ stats.xp }} XP накоплено</small></div>
     </section>
-
+    <section class="mp-section"><div class="mp-section-head"><div><div class="mp-kicker">РЕЗУЛЬТАТЫ</div><h2>Учебная статистика</h2></div></div><div class="mp-stats">
+        <div class="mp-stat"><span class="mp-icon mp-violet"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-12h-7l1-8Z"/></svg></span><strong>{{ stats.xp }}</strong><span>Всего XP</span></div>
+        <div class="mp-stat"><span class="mp-icon mp-amber"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 5 6 6 6 12a6 6 0 0 1-12 0c0-3 2-5 3-6 0 3 2 4 3 4 2-3 1-6 0-10Z"/></svg></span><strong>{{ stats.streak }}</strong><span>Дней подряд</span></div>
+        <div class="mp-stat"><span class="mp-icon mp-green"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg></span><strong>{{ stats.total_lessons }}</strong><span>Уроков пройдено</span></div>
+        <div class="mp-stat"><span class="mp-icon mp-blue"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 3 6 7 1-5 5 1 7-6-3-6 3 1-7-5-5 7-1Z"/></svg></span><strong>{{ stats.level }}</strong><span>Уровень</span></div>
+    </div></section>
+    {% set total_week = week|sum(attribute='xp') %}
+    {% set peak = [week|map(attribute='xp')|max, 1]|max if week else 1 %}
+    <div class="mp-middle">
+        <section class="mp-panel"><div class="mp-section-head"><div><div class="mp-kicker">ПОСЛЕДНИЕ 7 ДНЕЙ</div><h2>Активность</h2></div><span class="mp-week-total">{{ total_week }} XP</span></div>
+            <div class="mp-chart" aria-label="Опыт за последние семь дней">
+                {% for day in week %}<div class="mp-day {% if day.is_today %}mp-today{% endif %}"><span class="mp-day-value">{{ day.xp }}</span><div class="mp-bar-track"><span style="height: {{ (day.xp * 100 / peak)|round(1) }}%"></span></div><span class="mp-day-label">{{ day.day_name }}</span></div>{% endfor %}
+            </div><p class="mp-note">Количество XP, полученных за каждый день.</p>
+        </section>
+        <section class="mp-panel"><div class="mp-section-head"><div><div class="mp-kicker">ДИСЦИПЛИНЫ</div><h2>Мои курсы</h2></div><span class="mp-week-total">{{ user_courses|length }}</span></div>
+            {% if user_courses %}<div class="mp-course-list">{% for c in user_courses %}<a href="/course/{{ c.id }}"><span class="mp-icon mp-violet"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7c-3-3-6-3-9-2v14c3-1 6-1 9 2 3-3 6-1 9-2V5c-3-1-6-1-9 2v14"/></svg></span><strong>{{ c.name }}</strong><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a>{% endfor %}</div>{% else %}<p class="mp-note">Пока нет выбранных дисциплин.</p>{% endif %}<a class="mp-link" href="/courses/change">Управлять курсами →</a>
+        </section>
+    </div>
+    {% set earned = namespace(count=0) %}{% for a in all_achievements %}{% if a.id in earned_ids %}{% set earned.count = earned.count + 1 %}{% endif %}{% endfor %}
+    {% set achievement_percent = (earned.count * 100 / (all_achievements|length))|int if all_achievements else 0 %}
+    <section class="mp-section"><div class="mp-section-head"><div><div class="mp-kicker">КОЛЛЕКЦИЯ</div><h2>Достижения</h2></div><span class="mp-week-total">{{ earned.count }} / {{ all_achievements|length }}</span></div><div class="mp-achievement-progress" role="progressbar" aria-label="Получено достижений" aria-valuenow="{{ achievement_percent }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ achievement_percent }}%"></span></div>
+        {% if all_achievements %}<div class="mp-achievements">{% for a in all_achievements %}{% set is_earned = a.id in earned_ids %}<article class="mp-achievement {% if is_earned %}mp-earned{% endif %}"><div class="mp-achievement-top"><span class="mp-medal">{% if is_earned %}{{ a.icon }}{% else %}<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>{% endif %}</span><span class="mp-status">{% if is_earned %}Получено{% else %}Не открыто{% endif %}</span></div><h3>{{ a.title }}</h3><p>{{ a.description }}</p></article>{% endfor %}</div>{% else %}<p class="mp-note">Достижения пока не добавлены.</p>{% endif %}
+    </section>
+    <section class="mp-panel mp-account"><div><div class="mp-kicker">АККАУНТ</div><h2>Данные профиля</h2></div><dl><div><dt>Логин</dt><dd>{{ user.username }}</dd></div><div><dt>Электронная почта</dt><dd>{{ user.email }}</dd></div></dl></section>
 </div>
 {% endblock %}
