@@ -927,7 +927,8 @@ def profile():
     return render_template('profile.html', user=user, stats=stats,
                            user_courses=user_courses,
                            all_achievements=all_achievements,
-                           earned_ids=earned_ids)
+                           earned_ids=earned_ids,
+                           week=get_week_activity(user['id']))
 
 
 # ==================== ИМПОРТ ВОПРОСОВ ====================
