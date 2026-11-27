@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Подготовка к экзамену — MechLingo{% endblock %}
+{% set active = 'exam' %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/exam-center.css') }}">
+<div class="page-container ml-exam">
+<section class="ec-hero"><div><span class="ec-tag">MECHLINGO PRO</span><h1>Подготовка к экзамену</h1><p>Планируй подготовку, отслеживай изученные разделы и проверяй себя в условиях пробного экзамена.</p></div><div class="ec-hero-icon" aria-hidden="true"><svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 23 27-14 27 14-27 14L5 23Zm11 6v17c10 8 22 8 32 0V29m11-6v23"/><path d="M25 47h14"/></svg></div></section>
+{% if not pro %}
+<section class="ec-panel ec-locked"><span class="ec-tag">ПЛАТНЫЙ РАЗДЕЛ</span><h2>Подготовься к сессии системно</h2><p>Доступ PRO открывает персональный учебный маршрут, статистику прохождения разделов и пробные экзамены по дисциплинам.</p><div class="ec-grid"><article><h3>Персональный план</h3><p>Распредели неизученные разделы до даты экзамена.</p></article><article><h3>Учебная аналитика</h3><p>Проверь, сколько уроков пройдено в каждом разделе.</p></article><article><h3>Пробный экзамен</h3><p>До 20 вопросов по выбранному предмету, 15 минут.</p></article></div><div class="ec-notice">Продажа доступа пока не открыта. Сейчас раздел проходит тестирование.</div><a class="btn btn-primary" href="/reviews">Бесплатное повторение</a></section>
+{% else %}
+<div class="ec-heading"><h2>Твоя подготовка</h2><span class="ec-tag ec-active">PRO до {{ user.pro_until }}</span></div>
+{% if courses %}
+<section class="ec-panel"><h3>Составить учебный маршрут</h3><form method="get" action="/exam-center" class="ec-form"><label>Дисциплина<select name="course_id">{% for c in courses %}<option value="{{ c.id }}" {% if selected and selected.id == c.id %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</select></label><label>Дата экзамена<input type="date" name="date" value="{{ exam_date }}" required></label><label>Время в день<select name="minutes">{% for m in [30,60,120] %}<option value="{{ m }}" {% if m == minutes %}selected{% endif %}>{{ m }} мин</option>{% endfor %}</select></label><button class="btn btn-primary" type="submit">Составить план</button></form>
+{% if error %}<p role="alert" class="ec-notice">{{ error }}</p>{% endif %}
+{% if days %}<p class="ec-note">До экзамена: {{ days }} дн. · Доступное время: {{ days * minutes }} мин.</p>{% if plan %}<div class="ec-list">{% for task in plan %}<a href="/section/{{ task.section.id }}"><span>День {{ task.day }}</span><strong>{{ task.section.name }}</strong><small>{{ task.minutes }} мин</small></a>{% endfor %}</div><p class="ec-note">Это первый проход по незавершённым разделам, а не гарантия их освоения. {% if sections|selectattr('total','gt',0)|list|length > plan|length %}Не все разделы обязательно включены: проверь список изученности и при необходимости увеличь время подготовки.{% endif %}</p>{% else %}<p>Нет незавершённых разделов с уроками. Перейди к пробному экзамену или повторению.</p>{% endif %}{% endif %}</section>
+<section class="ec-panel"><h3>Изученность разделов · {{ selected.name }}</h3><p class="ec-note">Доля завершённых уроков, не прогноз сдачи экзамена.</p>{% for s in sections %}{% set p = (s.completed*100/s.total)|int if s.total else 0 %}<div class="ec-progress-label"><span>{{ s.name }}</span><strong>{{ s.completed }}/{{ s.total }} · {{ p }}%</strong></div><div class="ec-track" role="progressbar" aria-label="{{ s.name }}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ p }}"><span style="width:{{ p }}%"></span></div>{% else %}<p>Нет разделов.</p>{% endfor %}</section>
+<section class="ec-panel ec-exam"><div><span class="ec-tag">СИМУЛЯТОР</span><h3>Пробный экзамен</h3><p>До 20 вопросов по дисциплине «{{ selected.name }}» · 15 минут.</p></div><a class="btn btn-primary" href="{{ url_for('exam_setup', course_id=selected.id) }}">Начать экзамен</a></section>
+{% else %}<section class="ec-panel"><p>Активных дисциплин пока нет.</p></section>{% endif %}
+{% endif %}
+</div>
+{% endblock %}

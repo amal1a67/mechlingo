@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Пробный экзамен — MechLingo{% endblock %}
-{% set active = 'dashboard' %}
+{% set active = 'exam' %}
 
 {% block content %}
 <div class="level-container" style="max-width: 800px; margin: 0 auto; padding: 20px;">
@@ -54,7 +54,7 @@
         <div style="font-size: 48px; font-weight: 800; color: var(--primary); margin-bottom: 40px;" id="percentScore">70%</div>
         
         <div style="display: flex; gap: 12px; justify-content: center;">
-            <a href="/dashboard" class="btn btn-primary btn-lg">На главную</a>
+            <a href="/exam-center" class="btn btn-primary btn-lg">К подготовке</a>
             <button class="btn btn-outline btn-lg" onclick="location.reload()">Пройти заново</button>
         </div>
     </div>
@@ -73,8 +73,8 @@ function startExam() {
     document.getElementById('examScreen').style.display = 'block';
 
     // Загружаем вопросы с сервера
-    fetch('/api/exam/start')
-        .then(res => res.json())
+    fetch({{ url_for('api_exam_start', course_id=course_id)|tojson }})
+        .then(res => { if (!res.ok) throw new Error('Экзамен недоступен'); return res.json(); })
         .then(data => {
             if (!data.questions || data.questions.length === 0) {
                 alert('В базе пока нет вопросов для экзамена!');
@@ -96,7 +96,7 @@ function startExam() {
             }, 1000);
 
             renderExamQuestion();
-        });
+        }).catch(() => { alert('Не удалось начать экзамен. Проверь доступ PRO.'); window.location.href = '/exam-center'; });
 }
 
 function updateTimerDisplay() {
@@ -129,9 +129,10 @@ function renderExamQuestion() {
         
         btn.innerHTML = `
             <span class="option-letter" style="${isSelected ? 'background: var(--primary); border-color: var(--primary); color: white;' : ''}">${letter}</span>
-            <span class="option-text">${opt}</span>
+            <span class="option-text"></span>
         `;
         
+        btn.querySelector(".option-text").textContent = opt;
         btn.onclick = () => selectExamAnswer(opt, btn);
         optionsContainer.appendChild(btn);
     });

@@ -833,23 +833,104 @@ def api_complete_level(level_id):
 
 # ==================== ЭКЗАМЕН ====================
 
+def has_pro(user):
+    if not user:
+        return False
+    try:
+        return datetime.date.fromisoformat(user['pro_until']) >= datetime.date.today()
+    except (ValueError, TypeError, KeyError, IndexError):
+        return False
+
+
+@app.cli.command('grant-pro')
+def grant_pro():
+    """Grant a test subscription via a trusted server console."""
+    import click
+    username = click.prompt('Username')
+    days = click.prompt('Days', type=click.IntRange(1, 366))
+    db = get_db()
+    expiry = (datetime.date.today() + datetime.timedelta(days=days - 1)).isoformat()
+    result = db.execute('UPDATE users SET pro_until=? WHERE username=?', [expiry, username])
+    if not result.rowcount:
+        raise click.ClickException('User not found')
+    db.commit()
+    click.echo('Access through ' + expiry)
+
+
+@app.route('/exam-center')
+@login_required
+def exam_center():
+    user = get_user()
+    pro = has_pro(user)
+    courses, sections, plan = [], [], []
+    selected = None
+    exam_date = request.args.get('date', '')
+    minutes = request.args.get('minutes', 60, type=int)
+    if minutes not in (30, 60, 120):
+        minutes = 60
+    days = None
+    error = None
+    if pro:
+        db = get_db()
+        courses = db.execute('SELECT id, name FROM courses WHERE is_active=1 ORDER BY order_index').fetchall()
+        course_id = request.args.get('course_id', type=int)
+        selected = next((c for c in courses if c['id'] == course_id), courses[0] if courses else None)
+        if selected:
+            sections = db.execute("""
+                SELECT s.id, s.name, COUNT(DISTINCT l.id) AS total,
+                       COUNT(DISTINCT CASE WHEN p.status='completed' THEN l.id END) AS completed
+                FROM course_sections s
+                LEFT JOIN course_topics t ON t.section_id=s.id
+                LEFT JOIN course_levels l ON l.topic_id=t.id
+                LEFT JOIN user_progress p ON p.level_id=l.id AND p.user_id=?
+                WHERE s.course_id=? GROUP BY s.id ORDER BY s.order_index
+            """, [user['id'], selected['id']]).fetchall()
+        if exam_date:
+            try:
+                days = (datetime.date.fromisoformat(exam_date) - datetime.date.today()).days
+                if not 1 <= days <= 365:
+                    raise ValueError()
+                pending = sorted((s for s in sections if s['total'] > s['completed']), key=lambda s: s['completed']/s['total'])
+                # A planning heuristic, not a prediction of exam performance.
+                slots = max(1, minutes // 30)
+                for i, section in enumerate(pending[:days * slots]):
+                    day = 1 + i // slots
+                    plan.append({'day': day, 'section': section, 'minutes': 30})
+            except ValueError:
+                error = 'Выбери дату экзамена от завтра до одного года вперёд.'
+                days = None
+    return render_template('exam_center.html', user=user, stats=get_user_stats(user['id']),
+                           pro=pro, courses=courses, selected=selected, sections=sections,
+                           plan=plan, days=days, exam_date=exam_date, minutes=minutes, error=error)
+
+
 @app.route('/exam')
 @login_required
 def exam_setup():
     user = get_user()
-    return render_template('exam.html', user=user, stats=get_user_stats(user['id']))
+    if not has_pro(user):
+        return redirect(url_for('exam_center'))
+    course_id = request.args.get('course_id', type=int)
+    return render_template('exam.html', user=user, stats=get_user_stats(user['id']), course_id=course_id)
 
 
 @app.route('/api/exam/start', methods=['GET'])
 @login_required
 def api_exam_start():
+    if not has_pro(get_user()):
+        return jsonify({'error': 'Требуется доступ PRO'}), 403
     db = get_db()
-    questions = db.execute('''
+    course_id = request.args.get('course_id', type=int)
+    questions = db.execute("""
         SELECT lq.* FROM level_questions lq
-        ORDER BY RANDOM()
-        LIMIT 20
-    ''').fetchall()
-    
+        JOIN course_levels l ON l.id=lq.level_id
+        JOIN course_topics t ON t.id=l.topic_id
+        JOIN course_sections s ON s.id=t.section_id
+        JOIN courses c ON c.id=s.course_id
+        WHERE c.is_active=1 AND (? IS NULL OR c.id=?)
+        ORDER BY RANDOM() LIMIT 20
+    """, [course_id, course_id]).fetchall()
+
     q_list = []
     for q in questions:
         try:
